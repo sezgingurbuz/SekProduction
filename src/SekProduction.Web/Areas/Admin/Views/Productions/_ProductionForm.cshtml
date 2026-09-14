@@ -1,0 +1,121 @@
+@model SekProduction.Web.Models.Production
+@{
+    var isEdit = Model.Id > 0;
+    var hasImage = !string.IsNullOrEmpty(Model.CoverImageUrl);
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="admin-card p-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Genel Bilgiler</h2>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label fw-semibold"></label>
+                <input asp-for="Title" class="form-control form-control-lg" placeholder="Örn: Hamlet" data-slug-source />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Slug" class="form-label fw-semibold">Sayfa Adresi</label>
+                <div class="input-group">
+                    <span class="input-group-text text-muted">/Yapimlar/</span>
+                    <input asp-for="Slug" class="form-control" placeholder="hamlet" data-slug-target data-autoslug="@(isEdit ? "false" : "true")" />
+                </div>
+                <div class="form-text">
+                    @if (isEdit)
+                    {
+                        <text>Adresi değiştirirseniz eski linkler çalışmaz.</text>
+                    }
+                    else
+                    {
+                        <text>Başlıktan otomatik oluşturulur, isterseniz düzenleyebilirsiniz.</text>
+                    }
+                </div>
+                <span asp-validation-for="Slug" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ShortDescription" class="form-label fw-semibold"></label>
+                <input asp-for="ShortDescription" class="form-control" placeholder="Listelerde ve kartlarda görünen tek cümlelik özet" />
+                <span asp-validation-for="ShortDescription" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-semibold"></label>
+                <textarea asp-for="Description" class="form-control" rows="8" placeholder="Konu, künye, oyuncu kadrosu..."></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="ClientName" class="form-label fw-semibold"></label>
+                <input asp-for="ClientName" class="form-control" />
+                <span asp-validation-for="ClientName" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="admin-card p-4 mb-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Kapak Görseli</h2>
+
+            <label class="image-upload d-block mb-2" data-image-drop>
+                <input type="file" name="coverImage" class="d-none" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-image-input />
+                <img src="@Model.CoverImageUrl" alt="Kapak görseli önizleme" data-image-preview hidden="@(hasImage ? null : "hidden")" />
+                <div class="image-upload-placeholder" data-image-placeholder hidden="@(hasImage ? "hidden" : null)">
+                    <strong>Bilgisayardan görsel seçin</strong>
+                    veya buraya sürükleyip bırakın
+                    <div class="small mt-1">JPG, PNG veya WEBP · en fazla 5 MB</div>
+                </div>
+            </label>
+            @Html.ValidationMessage("coverImage", null, new { @class = "text-danger small d-block" })
+
+            @if (isEdit && hasImage)
+            {
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="removeCoverImage" value="true" id="removeCoverImage" data-image-remove />
+                    <label class="form-check-label small" for="removeCoverImage">Mevcut görseli kaldır</label>
+                </div>
+                <div class="form-text">Değiştirmek için alana tıklayıp yeni görsel seçin.</div>
+            }
+        </div>
+
+        <div class="admin-card p-4 mb-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Yayın Ayarları</h2>
+
+            <div class="mb-3">
+                <label asp-for="Category" class="form-label fw-semibold"></label>
+                <select asp-for="Category" class="form-select" asp-items="Html.GetEnumSelectList<ProductionCategory>()"></select>
+                <span asp-validation-for="Category" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <label asp-for="Year" class="form-label fw-semibold"></label>
+                    <input asp-for="Year" class="form-control" placeholder="@DateTime.Now.Year" />
+                    <span asp-validation-for="Year" class="text-danger small"></span>
+                </div>
+                <div class="col-6">
+                    <label asp-for="DisplayOrder" class="form-label fw-semibold"></label>
+                    <input asp-for="DisplayOrder" class="form-control" />
+                    <span asp-validation-for="DisplayOrder" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" asp-for="IsPublished" role="switch" />
+                <label class="form-check-label" asp-for="IsPublished">Sitede yayında</label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" asp-for="IsFeatured" role="switch" />
+                <label class="form-check-label" asp-for="IsFeatured">Anasayfada öne çıkar</label>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">@(isEdit ? "Değişiklikleri Kaydet" : "Yapımı Oluştur")</button>
+            <a asp-area="Admin" asp-action="Index" class="btn btn-link text-muted">Vazgeç</a>
+        </div>
+    </div>
+</div>

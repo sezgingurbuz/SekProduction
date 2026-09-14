@@ -6,6 +6,9 @@
 # Claude Code local/session settings (personal, not shared)
 .claude/settings.local.json
 
+# User-uploaded files (admin panel image uploads)
+**/wwwroot/uploads/
+
 # dotenv files
 .env
 

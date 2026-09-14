@@ -1,97 +1,131 @@
 @model SekProduction.Web.Models.Production
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = Model.Title;
+    var schedules = Model.EventSchedules.OrderBy(e => e.EventDate).ToList();
+    var today = DateTime.UtcNow.Date;
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>Production</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Slug)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Slug)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ShortDescription)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ShortDescription)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CoverImageUrl)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CoverImageUrl)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Category)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Category)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Year)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Year)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ClientName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ClientName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsFeatured)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsFeatured)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsPublished)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsPublished)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DisplayOrder)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DisplayOrder)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UpdatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UpdatedAt)
-        </dd>
-    </dl>
+<div class="admin-page-header">
+    <div>
+        <a asp-area="Admin" asp-action="Index" class="text-decoration-none small">&larr; Yapımlar</a>
+        <h1>@Model.Title</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Düzenle</a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Sil</a>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-area="Admin" asp-controller="EventSchedules" asp-action="Index" asp-route-productionId="@Model?.Id">Etkinlik Günleri</a> |
-    <a asp-action="Index">Back to List</a>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="admin-card p-4 mb-4">
+            @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+            {
+                <img src="@Model.CoverImageUrl" alt="@Model.Title" class="admin-detail-cover mb-4" />
+            }
+            @if (!string.IsNullOrEmpty(Model.ShortDescription))
+            {
+                <p class="lead">@Model.ShortDescription</p>
+            }
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <p style="white-space: pre-line" class="mb-0">@Model.Description</p>
+            }
+            else
+            {
+                <p class="text-muted mb-0">Açıklama eklenmemiş.</p>
+            }
+        </div>
+
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center p-4 pb-3">
+                <h2 class="h6 text-uppercase text-muted m-0">Etkinlik Günleri</h2>
+                <a asp-area="Admin" asp-controller="EventSchedules" asp-action="Index" asp-route-productionId="@Model.Id" class="btn btn-sm btn-outline-dark">Yönet</a>
+            </div>
+            @if (!schedules.Any())
+            {
+                <p class="text-muted px-4 pb-4 m-0">Henüz etkinlik tarihi eklenmedi.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table admin-table">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Mekan</th>
+                                <th>Şehir</th>
+                                <th>Bilet</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in schedules)
+                            {
+                                <tr class="@(s.EventDate < today ? "text-muted" : "")">
+                                    <td>@s.EventDate.ToString("dd MMM yyyy, HH:mm")</td>
+                                    <td>@s.Venue</td>
+                                    <td>@s.City</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(s.TicketUrl))
+                                        {
+                                            <a href="@s.TicketUrl" target="_blank" rel="noopener">Link ↗</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="admin-card p-4">
+            <dl class="mb-0">
+                <dt class="text-muted small">Durum</dt>
+                <dd>
+                    @if (Model.IsPublished)
+                    {
+                        <span class="badge text-bg-success">Yayında</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">Taslak</span>
+                    }
+                    @if (Model.IsFeatured)
+                    {
+                        <span class="badge text-bg-warning">Öne Çıkan</span>
+                    }
+                </dd>
+                <dt class="text-muted small">Kategori</dt>
+                <dd>@Model.Category.GetDisplayName()</dd>
+                <dt class="text-muted small">@Html.DisplayNameFor(m => m.ClientName)</dt>
+                <dd>@(string.IsNullOrEmpty(Model.ClientName) ? "—" : Model.ClientName)</dd>
+                <dt class="text-muted small">Yıl</dt>
+                <dd>@(Model.Year?.ToString() ?? "—")</dd>
+                <dt class="text-muted small">Sayfa Adresi</dt>
+                <dd>
+                    @if (Model.IsPublished)
+                    {
+                        <a asp-area="" asp-controller="Productions" asp-action="Details" asp-route-slug="@Model.Slug" target="_blank">/Yapimlar/@Model.Slug ↗</a>
+                    }
+                    else
+                    {
+                        <span>/Yapimlar/@Model.Slug</span>
+                    }
+                </dd>
+                <dt class="text-muted small">Sıra</dt>
+                <dd>@Model.DisplayOrder</dd>
+                <dt class="text-muted small">Oluşturulma</dt>
+                <dd>@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                @if (Model.UpdatedAt is not null)
+                {
+                    <dt class="text-muted small">Son Güncelleme</dt>
+                    <dd class="mb-0">@Model.UpdatedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                }
+            </dl>
+        </div>
+    </div>
 </div>

@@ -1,108 +1,109 @@
 @model IEnumerable<SekProduction.Web.Models.Production>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Yapımlar";
+    var today = DateTime.UtcNow.Date;
 }
 
-<h1>Index</h1>
+<div class="admin-page-header">
+    <div>
+        <h1>Yapımlar</h1>
+        <div class="text-muted small">Toplam @Model.Count() yapım</div>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Yapım</a>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Slug)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ShortDescription)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CoverImageUrl)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Category)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Year)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ClientName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsFeatured)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsPublished)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DisplayOrder)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedAt)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Slug)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ShortDescription)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CoverImageUrl)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Category)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Year)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ClientName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsFeatured)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsPublished)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DisplayOrder)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedAt)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
-                <a asp-area="Admin" asp-controller="EventSchedules" asp-action="Index" asp-route-productionId="@item.Id">Etkinlik Günleri</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="admin-card">
+    @if (!Model.Any())
+    {
+        <div class="admin-empty">
+            <p class="mb-3">Henüz hiç yapım eklenmedi.</p>
+            <a asp-action="Create" class="btn btn-outline-primary">İlk yapımı ekle</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table admin-table">
+                <thead>
+                    <tr>
+                        <th style="width: 88px;"></th>
+                        <th>Yapım</th>
+                        <th>Kategori</th>
+                        <th>Yakın Etkinlik</th>
+                        <th>Durum</th>
+                        <th class="text-center">Sıra</th>
+                        <th class="text-end"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var upcoming = item.EventSchedules.Where(e => e.EventDate >= today).OrderBy(e => e.EventDate).ToList();
+                        var next = upcoming.FirstOrDefault();
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.CoverImageUrl))
+                                {
+                                    <img src="@item.CoverImageUrl" alt="@item.Title" class="admin-thumb" />
+                                }
+                                else
+                                {
+                                    <div class="admin-thumb">Görsel yok</div>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.Id" class="fw-semibold text-decoration-none text-dark">@item.Title</a>
+                                <div class="text-muted small">/Yapimlar/@item.Slug</div>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill text-bg-light border">@item.Category.GetDisplayName()</span>
+                                @if (item.Year is not null)
+                                {
+                                    <div class="text-muted small mt-1">@item.Year</div>
+                                }
+                            </td>
+                            <td>
+                                @if (next is not null)
+                                {
+                                    <div>@next.EventDate.ToString("dd MMM yyyy, HH:mm")</div>
+                                    <div class="text-muted small">
+                                        @next.City
+                                        @if (upcoming.Count > 1)
+                                        {
+                                            <text>· +@(upcoming.Count - 1) tarih daha</text>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Planlanmış tarih yok</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.IsPublished)
+                                {
+                                    <span class="badge text-bg-success">Yayında</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Taslak</span>
+                                }
+                                @if (item.IsFeatured)
+                                {
+                                    <span class="badge text-bg-warning">Öne Çıkan</span>
+                                }
+                            </td>
+                            <td class="text-center">@item.DisplayOrder</td>
+                            <td class="text-end text-nowrap">
+                                <a asp-area="Admin" asp-controller="EventSchedules" asp-action="Index" asp-route-productionId="@item.Id" class="btn btn-sm btn-outline-dark">Etkinlik Günleri (@item.EventSchedules.Count)</a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Sil</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
