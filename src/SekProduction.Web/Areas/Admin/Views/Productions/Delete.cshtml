@@ -29,6 +29,10 @@
         {
             <text>Bağlı <strong>@Model.EventSchedules.Count etkinlik tarihi</strong> de silinecek.</text>
         }
+        @if (Model.CastMembers.Any() || Model.Photos.Any())
+        {
+            <text>@Model.CastMembers.Count oyuncu kaydı ve @Model.Photos.Count galeri fotoğrafı da silinecek.</text>
+        }
         @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
         {
             <text>Yüklenen kapak görseli de kaldırılacak.</text>

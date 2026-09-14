@@ -1,86 +1,320 @@
 @model Production
 @{
     ViewData["Title"] = Model.Title;
+    ViewData["BodyClass"] = "play-page";
+
+    var today = DateTime.Now.Date;
+    var sessions = Model.EventSchedules.Where(e => e.EventDate >= today).OrderBy(e => e.EventDate).ToList();
+    var nextTicket = sessions.FirstOrDefault(s => !string.IsNullOrEmpty(s.TicketUrl));
+    var cast = Model.CastMembers.OrderBy(c => c.DisplayOrder).ThenBy(c => c.Id).ToList();
+    var photos = Model.Photos.OrderBy(p => p.DisplayOrder).ThenBy(p => p.Id).ToList();
+    var trailerId = Model.TrailerYouTubeId;
+    var credits = (Model.Credits ?? string.Empty)
+        .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(line =>
+        {
+            var idx = line.IndexOf(':');
+            return idx > 0 ? (Role: line[..idx].Trim(), Name: line[(idx + 1)..].Trim()) : (Role: (string?)null, Name: line);
+        })
+        .ToList();
+    var lead = Model.ShortDescription
+        ?? (Model.Description is { Length: > 220 } d ? d[..220].TrimEnd() + "…" : Model.Description);
+    var hasMeta = Model.DurationText is not null || Model.ActCount is not null || Model.AgeLimit is not null || !string.IsNullOrEmpty(Model.ClientName);
 }
 
-<a asp-action="Index" class="d-inline-block mb-3">&larr; Tüm Yapımlar</a>
+@section Styles {
+    <link rel="stylesheet" href="~/css/play.css" asp-append-version="true" />
+}
 
-<div class="row">
-    <div class="col-md-7">
+@section Hero {
+    <section class="play-hero">
+        <div class="play-hero__bg" style="@(string.IsNullOrEmpty(Model.CoverImageUrl) ? null : $"background-image: url('{Model.CoverImageUrl}')")"></div>
+        <div class="container">
+            <div class="play-eyebrow">
+                @Model.Category.GetDisplayName()@(Model.Year is null ? "" : $" · {Model.Year}")
+            </div>
+            <h1 class="play-title">@Model.Title</h1>
+            @if (!string.IsNullOrEmpty(lead))
+            {
+                <p class="play-lead">@lead</p>
+            }
+            <div class="play-hero-meta">
+                @if (Model.AgeLimit is not null)
+                {
+                    <span><strong>Yaş Sınırı:</strong> @Model.AgeLimit</span>
+                }
+                @if (Model.DurationText is not null)
+                {
+                    <span><strong>Süre:</strong> @Model.DurationText</span>
+                }
+                @if (Model.ActCount is not null)
+                {
+                    <span><strong>Perde:</strong> @Model.ActCount</span>
+                }
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                @if (nextTicket is not null)
+                {
+                    <a href="@nextTicket.TicketUrl" target="_blank" rel="noopener" class="btn btn-play">Biletini Al</a>
+                }
+                @if (sessions.Any())
+                {
+                    <a href="#seanslar" class="btn btn-play-outline">Seanslar</a>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<div class="play-main">
+    <div class="d-flex gap-5 align-items-start">
         @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
         {
-            <img src="@Model.CoverImageUrl" class="img-fluid rounded mb-3" alt="@Model.Title" />
+            <img src="@Model.CoverImageUrl" alt="@Model.Title" class="play-poster" />
         }
-    </div>
-    <div class="col-md-5">
-        <h1>@Model.Title</h1>
-        <p class="text-muted">
-            @Model.Category.GetDisplayName()
-            @if (Model.Year is not null)
+        <div class="flex-grow-1">
+            @if (hasMeta)
             {
-                <text> &middot; @Model.Year</text>
-            }
-        </p>
-        @if (!string.IsNullOrEmpty(Model.ClientName))
-        {
-            <p><strong>Yönetmen / Sanatçı:</strong> @Model.ClientName</p>
-        }
-        @if (!string.IsNullOrEmpty(Model.ShortDescription))
-        {
-            <p class="lead">@Model.ShortDescription</p>
-        }
-    </div>
-</div>
-
-@if (!string.IsNullOrEmpty(Model.Description))
-{
-    <div class="mt-4">
-        <p style="white-space: pre-line">@Model.Description</p>
-    </div>
-}
-
-@{
-    var upcomingDates = Model.EventSchedules
-        .Where(e => e.EventDate >= DateTime.UtcNow.Date)
-        .OrderBy(e => e.EventDate)
-        .ToList();
-}
-
-<div class="mt-5">
-    <h2 class="mb-3">Etkinlik Günleri</h2>
-    @if (!upcomingDates.Any())
-    {
-        <p class="text-muted">Yeni etkinlik tarihleri yakında duyurulacak.</p>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead>
-                    <tr>
-                        <th>Tarih</th>
-                        <th>Mekan</th>
-                        <th>Şehir</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var schedule in upcomingDates)
+                <div class="play-meta">
+                    @if (Model.DurationText is not null)
                     {
-                        <tr>
-                            <td>@schedule.EventDate.ToString("dd MMMM yyyy, HH:mm")</td>
-                            <td>@schedule.Venue</td>
-                            <td>@schedule.City</td>
-                            <td>
-                                @if (!string.IsNullOrEmpty(schedule.TicketUrl))
-                                {
-                                    <a href="@schedule.TicketUrl" target="_blank" rel="noopener" class="btn btn-sm btn-dark">Bilet Al</a>
-                                }
-                            </td>
-                        </tr>
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                            <span><strong>Süre:</strong>@Model.DurationText</span>
+                        </span>
                     }
-                </tbody>
-            </table>
+                    @if (Model.ActCount is not null)
+                    {
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5c5.3-1.8 10.7-1.8 16 0V11a8 8 0 0 1-16 0z" /><path d="M8.5 9.5h1.5M14 9.5h1.5M9 14c1.8 1.4 4.2 1.4 6 0" /></svg>
+                            <span><strong>Perde:</strong>@Model.ActCount</span>
+                        </span>
+                    }
+                    @if (Model.AgeLimit is not null)
+                    {
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" /></svg>
+                            <span><strong>Yaş Sınırı:</strong>@Model.AgeLimit</span>
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ClientName))
+                    {
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z" /><path d="M14 6l3 3" /></svg>
+                            <span><strong>@Html.DisplayNameFor(m => m.ClientName):</strong>@Model.ClientName</span>
+                        </span>
+                    }
+                </div>
+            }
+
+            <div class="row g-4">
+                <div class="@(credits.Any() ? "col-lg-6" : "col-12")">
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="play-description">@Model.Description</div>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.ShortDescription))
+                    {
+                        <div class="play-description">@Model.ShortDescription</div>
+                    }
+                </div>
+                @if (credits.Any())
+                {
+                    <div class="col-lg-6">
+                        <div class="play-credits">
+                            <h2>Oyunun Kadrosu</h2>
+                            @foreach (var credit in credits)
+                            {
+                                <p>
+                                    @if (credit.Role is not null)
+                                    {
+                                        <span class="role">@credit.Role:</span>
+                                    }
+                                    @credit.Name
+                                </p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
+    </div>
+
+    <section class="play-section" id="seanslar">
+        <h2 class="play-heading">Seanslar</h2>
+        @if (!sessions.Any())
+        {
+            <p class="text-secondary">Yeni seanslar yakında duyurulacak.</p>
+        }
+        else
+        {
+            <div class="play-sessions">
+                @foreach (var s in sessions)
+                {
+                    <div class="play-session">
+                        <div class="play-session__date">
+                            <div class="play-session__day">@s.EventDate.ToString("dd")</div>
+                            <div class="play-session__month">@s.EventDate.ToString("MMM yyyy")</div>
+                        </div>
+                        <div class="play-session__info">
+                            <div class="play-session__time">@s.EventDate.ToString("dddd") · @s.EventDate.ToString("HH:mm")</div>
+                            <div class="play-session__place">@string.Join(" · ", new[] { s.Venue, s.City }.Where(x => !string.IsNullOrWhiteSpace(x)))</div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(s.TicketUrl))
+                        {
+                            <a href="@s.TicketUrl" target="_blank" rel="noopener" class="btn btn-play">Biletini Al</a>
+                        }
+                        else
+                        {
+                            <span class="text-secondary small">Bilet satışı yakında</span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    @if (cast.Any())
+    {
+        <section class="play-section">
+            <h2 class="play-heading">Oyuncular</h2>
+            <div class="play-cast">
+                @foreach (var member in cast)
+                {
+                    <div class="play-cast-card">
+                        @if (!string.IsNullOrEmpty(member.PhotoUrl))
+                        {
+                            <img src="@member.PhotoUrl" alt="@member.FullName" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="play-cast-card__placeholder">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4.5" /><path d="M3 22c0-5 4-8 9-8s9 3 9 8z" /></svg>
+                            </div>
+                        }
+                        <div class="play-cast-card__caption">
+                            <strong>@member.FullName</strong>
+                            @if (!string.IsNullOrEmpty(member.RoleName))
+                            {
+                                <span>@member.RoleName</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
     }
+
+    @if (trailerId is not null || photos.Any())
+    {
+        <section class="play-section">
+            <div class="row g-5">
+                @if (trailerId is not null)
+                {
+                    <div class="col-lg-6">
+                        <h2 class="play-heading">Fragman</h2>
+                        <button type="button" class="play-trailer" data-bs-toggle="modal" data-bs-target="#trailerModal" aria-label="Fragmanı oynat">
+                            <img src="https://img.youtube.com/vi/@trailerId/hqdefault.jpg" alt="@Model.Title fragman" loading="lazy" />
+                            <span class="play-trailer__play">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z" /></svg>
+                            </span>
+                        </button>
+                    </div>
+                }
+                @if (photos.Any())
+                {
+                    <div class="col-lg-6">
+                        <h2 class="play-heading">Galeri</h2>
+                        <div class="play-gallery">
+                            @for (var i = 0; i < Math.Min(4, photos.Count); i++)
+                            {
+                                <button type="button" data-gallery-index="@i" aria-label="Fotoğrafı büyüt">
+                                    <img src="@photos[i].ImageUrl" alt="@Model.Title fotoğraf @(i + 1)" loading="lazy" />
+                                    @if (i == 3 && photos.Count > 4)
+                                    {
+                                        <span class="play-gallery__more">+@(photos.Count - 4)</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    <div class="mt-5">
+        <a asp-action="Index">&larr; Tüm Yapımlar</a>
+    </div>
 </div>
+
+@if (trailerId is not null)
+{
+    <div class="modal fade play-modal" id="trailerModal" tabindex="-1" aria-label="Fragman" aria-hidden="true" data-video-src="https://www.youtube-nocookie.com/embed/@trailerId?autoplay=1&rel=0">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2" style="z-index: 2;" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                <div class="ratio ratio-16x9">
+                    <iframe src="" title="@Model.Title fragman" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (photos.Any())
+{
+    <div class="modal fade play-modal" id="galleryModal" tabindex="-1" aria-label="Galeri" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2" style="z-index: 3;" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                <div id="galleryCarousel" class="carousel slide">
+                    <div class="carousel-inner">
+                        @for (var i = 0; i < photos.Count; i++)
+                        {
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <img src="@photos[i].ImageUrl" alt="@Model.Title fotoğraf @(i + 1)" loading="lazy" />
+                            </div>
+                        }
+                    </div>
+                    @if (photos.Count > 1)
+                    {
+                        <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Önceki</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Sonraki</span>
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            var trailer = document.getElementById('trailerModal');
+            if (trailer) {
+                var frame = trailer.querySelector('iframe');
+                trailer.addEventListener('show.bs.modal', function () { frame.src = trailer.dataset.videoSrc; });
+                trailer.addEventListener('hidden.bs.modal', function () { frame.src = ''; });
+            }
+
+            var gallery = document.getElementById('galleryModal');
+            if (gallery) {
+                var items = gallery.querySelectorAll('.carousel-item');
+                document.querySelectorAll('[data-gallery-index]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        items.forEach(function (item) { item.classList.remove('active'); });
+                        items[Number(btn.dataset.galleryIndex)].classList.add('active');
+                        bootstrap.Modal.getOrCreateInstance(gallery).show();
+                    });
+                });
+            }
+        })();
+    </script>
+}

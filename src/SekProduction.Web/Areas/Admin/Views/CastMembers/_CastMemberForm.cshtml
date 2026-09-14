@@ -1,0 +1,56 @@
+@model SekProduction.Web.Models.CastMember
+@{
+    var isEdit = Model.Id > 0;
+    var hasImage = !string.IsNullOrEmpty(Model.PhotoUrl);
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+<input type="hidden" asp-for="ProductionId" />
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="admin-card p-4">
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label fw-semibold"></label>
+                <input asp-for="FullName" class="form-control form-control-lg" />
+                <span asp-validation-for="FullName" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="RoleName" class="form-label fw-semibold"></label>
+                <input asp-for="RoleName" class="form-control" placeholder="Örn: Medea (isteğe bağlı)" />
+                <span asp-validation-for="RoleName" class="text-danger small"></span>
+            </div>
+            <div>
+                <label asp-for="DisplayOrder" class="form-label fw-semibold"></label>
+                <input asp-for="DisplayOrder" class="form-control" style="max-width: 120px;" />
+                <span asp-validation-for="DisplayOrder" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="admin-card p-4 mb-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Fotoğraf</h2>
+            <label class="image-upload d-block mb-2" data-image-drop>
+                <input type="file" name="photo" class="d-none" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-image-input />
+                <img src="@Model.PhotoUrl" alt="Fotoğraf önizleme" data-image-preview hidden="@(hasImage ? null : "hidden")" />
+                <div class="image-upload-placeholder" data-image-placeholder hidden="@(hasImage ? "hidden" : null)">
+                    <strong>Bilgisayardan fotoğraf seçin</strong>
+                    veya buraya sürükleyip bırakın
+                    <div class="small mt-1">Dikey (portre) fotoğraf önerilir · en fazla 5 MB</div>
+                </div>
+            </label>
+            @Html.ValidationMessage("photo", null, new { @class = "text-danger small d-block" })
+            @if (isEdit && hasImage)
+            {
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="removePhoto" value="true" id="removePhoto" data-image-remove />
+                    <label class="form-check-label small" for="removePhoto">Mevcut fotoğrafı kaldır</label>
+                </div>
+            }
+        </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">@(isEdit ? "Kaydet" : "Oyuncuyu Ekle")</button>
+            <a asp-action="Index" asp-route-productionId="@Model.ProductionId" class="btn btn-link text-muted">Vazgeç</a>
+        </div>
+    </div>
+</div>

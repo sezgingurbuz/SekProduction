@@ -14,6 +14,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton<SekProduction.Web.Services.ImageStorage>();
 
 var app = builder.Build();
 
@@ -28,6 +29,14 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+var turkish = new System.Globalization.CultureInfo("tr-TR");
+app.UseRequestLocalization(new Microsoft.AspNetCore.Builder.RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(turkish),
+    SupportedCultures = new[] { turkish },
+    SupportedUICultures = new[] { turkish }
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

@@ -54,6 +54,41 @@
                 <span asp-validation-for="ClientName" class="text-danger small"></span>
             </div>
         </div>
+
+        <div class="admin-card p-4 mt-4">
+            <h2 class="h6 text-uppercase text-muted mb-3">Oyun Bilgileri</h2>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-4">
+                    <label asp-for="AgeLimit" class="form-label fw-semibold"></label>
+                    <input asp-for="AgeLimit" class="form-control" placeholder="Örn: 16+" />
+                    <span asp-validation-for="AgeLimit" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-4">
+                    <label asp-for="DurationMinutes" class="form-label fw-semibold"></label>
+                    <input asp-for="DurationMinutes" class="form-control" placeholder="Örn: 85" />
+                    <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-4">
+                    <label asp-for="ActCount" class="form-label fw-semibold"></label>
+                    <input asp-for="ActCount" class="form-control" placeholder="Örn: 1" />
+                    <span asp-validation-for="ActCount" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Credits" class="form-label fw-semibold"></label>
+                <textarea asp-for="Credits" class="form-control" rows="7" placeholder="Yazan: ...&#10;Yöneten: ...&#10;Dekor ve Kostüm Tasarımı: ...&#10;Işık Tasarımı: ..."></textarea>
+                <div class="form-text">Her satıra bir görev yazın, görev ile ismi iki nokta (:) ile ayırın.</div>
+                <span asp-validation-for="Credits" class="text-danger small"></span>
+            </div>
+
+            <div>
+                <label asp-for="TrailerUrl" class="form-label fw-semibold"></label>
+                <input asp-for="TrailerUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
+                <span asp-validation-for="TrailerUrl" class="text-danger small"></span>
+            </div>
+        </div>
     </div>
 
     <div class="col-lg-4">

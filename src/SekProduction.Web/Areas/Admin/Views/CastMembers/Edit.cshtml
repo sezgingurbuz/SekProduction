@@ -1,0 +1,21 @@
+@model SekProduction.Web.Models.CastMember
+@{
+    var production = (SekProduction.Web.Models.Production)ViewData["Production"]!;
+    ViewData["Title"] = "Oyuncuyu Düzenle";
+}
+
+<div class="admin-page-header">
+    <div>
+        <a asp-action="Index" asp-route-productionId="@production.Id" class="text-decoration-none small">&larr; @production.Title · Oyuncular</a>
+        <h1>@Model.FullName</h1>
+    </div>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" enctype="multipart/form-data">
+    <partial name="_CastMemberForm" model="Model" />
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/admin-production-form.js" asp-append-version="true"></script>
+}

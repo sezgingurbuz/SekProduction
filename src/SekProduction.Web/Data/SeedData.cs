@@ -51,6 +51,10 @@ public static class SeedData
                 Category = ProductionCategory.Theatre,
                 Year = DateTime.UtcNow.Year,
                 ClientName = "Yönetmen Adı",
+                AgeLimit = "16+",
+                DurationMinutes = 85,
+                ActCount = 1,
+                Credits = "Yazan: Yazar Adı\nYöneten: Yönetmen Adı\nDekor ve Kostüm Tasarımı: Tasarımcı Adı\nIşık Tasarımı: Tasarımcı Adı",
                 IsFeatured = true,
                 IsPublished = true,
                 DisplayOrder = 1

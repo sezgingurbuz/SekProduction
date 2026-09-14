@@ -1,0 +1,72 @@
+@model IEnumerable<SekProduction.Web.Models.ProductionPhoto>
+@{
+    var production = (SekProduction.Web.Models.Production)ViewData["Production"]!;
+    ViewData["Title"] = "Galeri";
+}
+
+<div class="admin-page-header">
+    <div>
+        <a asp-area="Admin" asp-controller="Productions" asp-action="Edit" asp-route-id="@production.Id" class="text-decoration-none small">&larr; @production.Title</a>
+        <h1>Galeri</h1>
+        <div class="text-muted small">@Model.Count() fotoğraf</div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] is string error)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<div class="admin-card p-4 mb-4">
+    <form asp-action="Upload" asp-route-productionId="@production.Id" method="post" enctype="multipart/form-data">
+        <label class="image-upload d-block mb-3" data-multi-drop>
+            <input type="file" name="photos" multiple class="d-none" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-multi-input />
+            <div class="image-upload-placeholder">
+                <strong data-multi-label>Galeriye eklenecek fotoğrafları seçin</strong>
+                veya buraya sürükleyip bırakın
+                <div class="small mt-1">Tek seferde en fazla 10 fotoğraf · JPG, PNG veya WEBP · her biri en fazla 5 MB</div>
+            </div>
+        </label>
+        <button type="submit" class="btn btn-primary">Yükle</button>
+    </form>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row g-3">
+        @foreach (var photo in Model)
+        {
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="admin-card overflow-hidden">
+                    <a href="@photo.ImageUrl" target="_blank"><img src="@photo.ImageUrl" alt="" class="w-100" style="aspect-ratio: 4 / 3; object-fit: cover;" /></a>
+                    <div class="p-2 text-end">
+                        <form asp-action="Delete" asp-route-id="@photo.Id" method="post" onsubmit="return confirm('Bu fotoğraf silinsin mi?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            var input = document.querySelector('[data-multi-input]');
+            var drop = document.querySelector('[data-multi-drop]');
+            var label = document.querySelector('[data-multi-label]');
+            input.addEventListener('change', function () {
+                label.textContent = input.files.length ? input.files.length + ' fotoğraf seçildi — "Yükle"ye basın' : 'Galeriye eklenecek fotoğrafları seçin';
+            });
+            ['dragenter', 'dragover'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.add('is-dragover'); }); });
+            ['dragleave', 'drop'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.remove('is-dragover'); }); });
+            drop.addEventListener('drop', function (e) {
+                if (e.dataTransfer && e.dataTransfer.files.length) {
+                    input.files = e.dataTransfer.files;
+                    input.dispatchEvent(new Event('change'));
+                }
+            });
+        })();
+    </script>
+}

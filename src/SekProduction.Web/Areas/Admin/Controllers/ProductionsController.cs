@@ -1,14 +1,13 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SekProduction.Web.Data;
 using SekProduction.Web.Models;
+using SekProduction.Web.Services;
 
 namespace SekProduction.Web.Areas.Admin.Controllers
 {
@@ -16,17 +15,16 @@ namespace SekProduction.Web.Areas.Admin.Controllers
     [Authorize(Roles = SeedData.AdminRole)]
     public class ProductionsController : Controller
     {
-        private const string UploadFolder = "uploads/productions";
-        private const long MaxImageBytes = 5 * 1024 * 1024;
-        private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+        private const string ImageFolder = "productions";
+        private const string BindFields = "Title,Slug,ShortDescription,Description,Category,Year,ClientName,AgeLimit,DurationMinutes,ActCount,Credits,TrailerUrl,IsFeatured,IsPublished,DisplayOrder";
 
         private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _environment;
+        private readonly ImageStorage _images;
 
-        public ProductionsController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public ProductionsController(ApplicationDbContext context, ImageStorage images)
         {
             _context = context;
-            _environment = environment;
+            _images = images;
         }
 
         // GET: Productions
@@ -34,6 +32,9 @@ namespace SekProduction.Web.Areas.Admin.Controllers
         {
             var productions = await _context.Productions
                 .Include(p => p.EventSchedules)
+                .Include(p => p.CastMembers)
+                .Include(p => p.Photos)
+                .AsSplitQuery()
                 .OrderBy(p => p.DisplayOrder)
                 .ThenByDescending(p => p.CreatedAt)
                 .ToListAsync();
@@ -51,6 +52,9 @@ namespace SekProduction.Web.Areas.Admin.Controllers
 
             var production = await _context.Productions
                 .Include(p => p.EventSchedules)
+                .Include(p => p.CastMembers)
+                .Include(p => p.Photos)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (production == null)
             {
@@ -69,17 +73,15 @@ namespace SekProduction.Web.Areas.Admin.Controllers
         // POST: Productions/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-            [Bind("Title,Slug,ShortDescription,Description,Category,Year,ClientName,IsFeatured,IsPublished,DisplayOrder")] Production production,
-            IFormFile? coverImage)
+        public async Task<IActionResult> Create([Bind(BindFields)] Production production, IFormFile? coverImage)
         {
-            ValidateImage(coverImage);
+            ValidateInput(production, coverImage);
 
             if (ModelState.IsValid)
             {
                 if (coverImage != null)
                 {
-                    production.CoverImageUrl = await SaveImageAsync(coverImage);
+                    production.CoverImageUrl = await _images.SaveAsync(coverImage, ImageFolder);
                 }
 
                 production.CreatedAt = DateTime.UtcNow;
@@ -111,11 +113,7 @@ namespace SekProduction.Web.Areas.Admin.Controllers
         // POST: Productions/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int id,
-            [Bind("Id,Title,Slug,ShortDescription,Description,Category,Year,ClientName,IsFeatured,IsPublished,DisplayOrder")] Production production,
-            IFormFile? coverImage,
-            bool removeCoverImage)
+        public async Task<IActionResult> Edit(int id, [Bind("Id," + BindFields)] Production production, IFormFile? coverImage, bool removeCoverImage)
         {
             if (id != production.Id)
             {
@@ -132,7 +130,7 @@ namespace SekProduction.Web.Areas.Admin.Controllers
                 return NotFound();
             }
 
-            ValidateImage(coverImage);
+            ValidateInput(production, coverImage);
 
             if (!ModelState.IsValid)
             {
@@ -147,7 +145,7 @@ namespace SekProduction.Web.Areas.Admin.Controllers
             string? imageToDelete = null;
             if (coverImage != null)
             {
-                production.CoverImageUrl = await SaveImageAsync(coverImage);
+                production.CoverImageUrl = await _images.SaveAsync(coverImage, ImageFolder);
                 imageToDelete = existing.CoverImageUrl;
             }
             else if (removeCoverImage)
@@ -170,7 +168,7 @@ namespace SekProduction.Web.Areas.Admin.Controllers
                 throw;
             }
 
-            DeleteUploadedImage(imageToDelete);
+            _images.Delete(imageToDelete);
             TempData["StatusMessage"] = $"\"{production.Title}\" güncellendi.";
             return RedirectToAction(nameof(Index), new { area = "Admin" });
         }
@@ -185,6 +183,9 @@ namespace SekProduction.Web.Areas.Admin.Controllers
 
             var production = await _context.Productions
                 .Include(p => p.EventSchedules)
+                .Include(p => p.CastMembers)
+                .Include(p => p.Photos)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (production == null)
             {
@@ -199,12 +200,22 @@ namespace SekProduction.Web.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var production = await _context.Productions.FindAsync(id);
+            var production = await _context.Productions
+                .Include(p => p.CastMembers)
+                .Include(p => p.Photos)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (production != null)
             {
+                var files = production.CastMembers.Select(c => c.PhotoUrl)
+                    .Concat(production.Photos.Select(p => p.ImageUrl))
+                    .Append(production.CoverImageUrl)
+                    .ToList();
+
                 _context.Productions.Remove(production);
                 await _context.SaveChangesAsync();
-                DeleteUploadedImage(production.CoverImageUrl);
+
+                files.ForEach(_images.Delete);
                 TempData["StatusMessage"] = $"\"{production.Title}\" silindi.";
             }
 
@@ -216,50 +227,16 @@ namespace SekProduction.Web.Areas.Admin.Controllers
             return _context.Productions.Any(e => e.Id == id);
         }
 
-        private void ValidateImage(IFormFile? file)
+        private void ValidateInput(Production production, IFormFile? coverImage)
         {
-            if (file == null)
+            if (coverImage != null && _images.Validate(coverImage) is { } error)
             {
-                return;
+                ModelState.AddModelError("coverImage", error);
             }
 
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!AllowedExtensions.Contains(extension) || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(production.TrailerUrl) && production.TrailerYouTubeId is null)
             {
-                ModelState.AddModelError("coverImage", "Sadece JPG, PNG veya WEBP formatında görsel yükleyebilirsiniz.");
-            }
-            else if (file.Length == 0 || file.Length > MaxImageBytes)
-            {
-                ModelState.AddModelError("coverImage", "Görsel boyutu en fazla 5 MB olabilir.");
-            }
-        }
-
-        private async Task<string> SaveImageAsync(IFormFile file)
-        {
-            var folder = Path.Combine(_environment.WebRootPath, UploadFolder);
-            Directory.CreateDirectory(folder);
-
-            var fileName = $"{Guid.NewGuid():N}{Path.GetExtension(file.FileName).ToLowerInvariant()}";
-            await using (var stream = new FileStream(Path.Combine(folder, fileName), FileMode.CreateNew))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            return $"/{UploadFolder}/{fileName}";
-        }
-
-        private void DeleteUploadedImage(string? imageUrl)
-        {
-            if (string.IsNullOrEmpty(imageUrl) || !imageUrl.StartsWith($"/{UploadFolder}/", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            var folder = Path.GetFullPath(Path.Combine(_environment.WebRootPath, UploadFolder));
-            var fullPath = Path.GetFullPath(Path.Combine(folder, Path.GetFileName(imageUrl)));
-            if (fullPath.StartsWith(folder + Path.DirectorySeparatorChar) && System.IO.File.Exists(fullPath))
-            {
-                System.IO.File.Delete(fullPath);
+                ModelState.AddModelError(nameof(Production.TrailerUrl), "Geçerli bir YouTube video linki girin.");
             }
         }
     }

@@ -105,6 +105,13 @@
                 <dd>@(string.IsNullOrEmpty(Model.ClientName) ? "—" : Model.ClientName)</dd>
                 <dt class="text-muted small">Yıl</dt>
                 <dd>@(Model.Year?.ToString() ?? "—")</dd>
+                <dt class="text-muted small">Yaş Sınırı · Süre · Perde</dt>
+                <dd>@(Model.AgeLimit ?? "—") · @(Model.DurationText ?? "—") · @(Model.ActCount?.ToString() ?? "—")</dd>
+                <dt class="text-muted small">Oyuncular / Galeri</dt>
+                <dd>
+                    <a asp-area="Admin" asp-controller="CastMembers" asp-action="Index" asp-route-productionId="@Model.Id">@Model.CastMembers.Count oyuncu</a> ·
+                    <a asp-area="Admin" asp-controller="ProductionPhotos" asp-action="Index" asp-route-productionId="@Model.Id">@Model.Photos.Count fotoğraf</a>
+                </dd>
                 <dt class="text-muted small">Sayfa Adresi</dt>
                 <dd>
                     @if (Model.IsPublished)

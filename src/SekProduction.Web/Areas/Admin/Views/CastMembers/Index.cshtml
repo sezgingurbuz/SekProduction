@@ -1,0 +1,65 @@
+@model IEnumerable<SekProduction.Web.Models.CastMember>
+@{
+    var production = (SekProduction.Web.Models.Production)ViewData["Production"]!;
+    ViewData["Title"] = "Oyuncular";
+}
+
+<div class="admin-page-header">
+    <div>
+        <a asp-area="Admin" asp-controller="Productions" asp-action="Edit" asp-route-id="@production.Id" class="text-decoration-none small">&larr; @production.Title</a>
+        <h1>Oyuncular</h1>
+    </div>
+    <a asp-action="Create" asp-route-productionId="@production.Id" class="btn btn-primary">+ Oyuncu Ekle</a>
+</div>
+
+<div class="admin-card">
+    @if (!Model.Any())
+    {
+        <div class="admin-empty">
+            <p class="mb-3">Bu yapıma henüz oyuncu eklenmedi.</p>
+            <a asp-action="Create" asp-route-productionId="@production.Id" class="btn btn-outline-primary">İlk oyuncuyu ekle</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table admin-table">
+                <thead>
+                    <tr>
+                        <th style="width: 72px;"></th>
+                        <th>Ad Soyad</th>
+                        <th>Rol</th>
+                        <th class="text-center">Sıra</th>
+                        <th class="text-end"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.PhotoUrl))
+                                {
+                                    <img src="@item.PhotoUrl" alt="@item.FullName" class="admin-thumb" style="width: 48px; height: 60px;" />
+                                }
+                                else
+                                {
+                                    <div class="admin-thumb" style="width: 48px; height: 60px;">—</div>
+                                }
+                            </td>
+                            <td class="fw-semibold">@item.FullName</td>
+                            <td class="text-muted">@item.RoleName</td>
+                            <td class="text-center">@item.DisplayOrder</td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bu oyuncu kadrodan çıkarılsın mı?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

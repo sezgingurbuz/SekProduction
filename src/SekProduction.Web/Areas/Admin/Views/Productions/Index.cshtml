@@ -96,9 +96,19 @@
                             </td>
                             <td class="text-center">@item.DisplayOrder</td>
                             <td class="text-end text-nowrap">
-                                <a asp-area="Admin" asp-controller="EventSchedules" asp-action="Index" asp-route-productionId="@item.Id" class="btn btn-sm btn-outline-dark">Etkinlik Günleri (@item.EventSchedules.Count)</a>
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Sil</a>
+                                <div class="btn-group">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Diğer işlemler</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" asp-area="Admin" asp-controller="EventSchedules" asp-action="Index" asp-route-productionId="@item.Id">Etkinlik Günleri (@item.EventSchedules.Count)</a></li>
+                                        <li><a class="dropdown-item" asp-area="Admin" asp-controller="CastMembers" asp-action="Index" asp-route-productionId="@item.Id">Oyuncular (@item.CastMembers.Count)</a></li>
+                                        <li><a class="dropdown-item" asp-area="Admin" asp-controller="ProductionPhotos" asp-action="Index" asp-route-productionId="@item.Id">Galeri (@item.Photos.Count)</a></li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li><a class="dropdown-item text-danger" asp-action="Delete" asp-route-id="@item.Id">Sil</a></li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                     }

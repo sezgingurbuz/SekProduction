@@ -40,6 +40,9 @@ public class ProductionsController : Controller
     {
         var production = await _context.Productions
             .Include(p => p.EventSchedules)
+            .Include(p => p.CastMembers)
+            .Include(p => p.Photos)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Slug == slug && p.IsPublished);
 
         if (production is null)
