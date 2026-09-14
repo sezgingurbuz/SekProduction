@@ -1,0 +1,54 @@
+@{
+    ViewData["Title"] = "Kontrol Paneli";
+}
+
+<h1>Kontrol Paneli</h1>
+<p class="text-muted">Sek Production yönetim paneline hoş geldiniz.</p>
+
+<div class="row g-3 mt-2">
+    <div class="col-sm-6 col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Yapımlar</h5>
+                <p class="card-text display-6">@ViewData["ProductionCount"]</p>
+                <a asp-area="Admin" asp-controller="Productions" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Ekip Üyeleri</h5>
+                <p class="card-text display-6">@ViewData["TeamMemberCount"]</p>
+                <a asp-area="Admin" asp-controller="TeamMembers" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Haberler</h5>
+                <p class="card-text display-6">@ViewData["NewsPostCount"]</p>
+                <a asp-area="Admin" asp-controller="NewsPosts" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Referanslar</h5>
+                <p class="card-text display-6">@ViewData["ClientReferenceCount"]</p>
+                <a asp-area="Admin" asp-controller="ClientReferences" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card border-warning">
+            <div class="card-body">
+                <h5 class="card-title">Okunmamış Mesajlar</h5>
+                <p class="card-text display-6">@ViewData["UnreadMessageCount"]</p>
+                <a asp-area="Admin" asp-controller="ContactMessages" asp-action="Index" class="btn btn-outline-warning btn-sm">İncele</a>
+            </div>
+        </div>
+    </div>
+</div>

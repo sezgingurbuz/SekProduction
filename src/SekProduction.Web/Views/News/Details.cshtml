@@ -1,0 +1,25 @@
+@model NewsPost
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<a asp-action="Index" class="d-inline-block mb-3">&larr; Tüm Haberler</a>
+
+<h1>@Model.Title</h1>
+<p class="text-muted">
+    @Model.PublishedAt.ToString("dd.MM.yyyy")
+    @if (!string.IsNullOrEmpty(Model.AuthorName))
+    {
+        <text> &middot; @Model.AuthorName</text>
+    }
+</p>
+
+@if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+{
+    <img src="@Model.CoverImageUrl" class="img-fluid rounded mb-3" alt="@Model.Title" />
+}
+
+@if (!string.IsNullOrEmpty(Model.Content))
+{
+    <div style="white-space: pre-line">@Model.Content</div>
+}

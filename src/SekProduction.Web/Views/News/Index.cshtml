@@ -1,0 +1,35 @@
+@model List<NewsPost>
+@{
+    ViewData["Title"] = "Haberler";
+}
+
+<h1 class="mb-4">Haberler</h1>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz haber eklenmedi.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var post in Model)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(post.CoverImageUrl))
+                    {
+                        <img src="@post.CoverImageUrl" class="card-img-top" alt="@post.Title" />
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@post.Title</h5>
+                        <p class="card-text">@post.Summary</p>
+                        <p class="text-muted small">@post.PublishedAt.ToString("dd.MM.yyyy")</p>
+                    </div>
+                    <div class="card-footer">
+                        <a asp-action="Details" asp-route-slug="@post.Slug" class="btn btn-sm btn-outline-dark">Devamını Oku</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

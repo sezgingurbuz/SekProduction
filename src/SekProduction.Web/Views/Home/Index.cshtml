@@ -1,0 +1,108 @@
+@model HomeViewModel
+@{
+    ViewData["Title"] = "Anasayfa";
+}
+
+<div class="p-5 mb-4 bg-dark text-white rounded-3">
+    <div class="container-fluid py-4">
+        <h1 class="display-5 fw-bold">Sek Production</h1>
+        <p class="col-md-8 fs-4">Müzik, prodüksiyon, konser organizasyonu ve sanatçı yönetimi alanlarında hizmet veriyoruz.</p>
+        <p class="col-md-8 fs-5">Bu sezon özellikle tiyatro sahnesindeyiz: sahnelediğimiz oyunların etkinlik tarihlerini ve bilet linklerini aşağıda bulabilirsiniz.</p>
+        <a asp-controller="Contact" asp-action="Index" class="btn btn-light btn-lg">Bizimle İletişime Geçin</a>
+    </div>
+</div>
+
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Bu Sezon Sahnede</h2>
+        <a asp-controller="Productions" asp-action="Index">Tümünü Gör &rarr;</a>
+    </div>
+    @if (!Model.FeaturedProductions.Any())
+    {
+        <p class="text-muted">Henüz öne çıkan bir oyun eklenmedi.</p>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            @foreach (var production in Model.FeaturedProductions)
+            {
+                var nextDate = production.EventSchedules
+                    .Where(e => e.EventDate >= DateTime.UtcNow.Date)
+                    .OrderBy(e => e.EventDate)
+                    .FirstOrDefault();
+                <div class="col">
+                    <div class="card h-100">
+                        @if (!string.IsNullOrEmpty(production.CoverImageUrl))
+                        {
+                            <img src="@production.CoverImageUrl" class="card-img-top" alt="@production.Title" />
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@production.Title</h5>
+                            <p class="card-text">@production.ShortDescription</p>
+                            @if (nextDate is not null)
+                            {
+                                <p class="text-muted small mb-0">
+                                    @nextDate.EventDate.ToString("dd MMMM yyyy, HH:mm")@(nextDate.City is null ? "" : $" · {nextDate.City}")
+                                </p>
+                            }
+                        </div>
+                        <div class="card-footer d-flex gap-2">
+                            <a asp-controller="Productions" asp-action="Details" asp-route-slug="@production.Slug" class="btn btn-sm btn-outline-dark">Detaylar</a>
+                            @if (nextDate is not null && !string.IsNullOrEmpty(nextDate.TicketUrl))
+                            {
+                                <a href="@nextDate.TicketUrl" target="_blank" rel="noopener" class="btn btn-sm btn-dark">Bilet Al</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@if (Model.ClientReferences.Any())
+{
+    <section class="mb-5">
+        <h2 class="mb-3">Referanslarımız</h2>
+        <div class="d-flex flex-wrap align-items-center gap-4">
+            @foreach (var reference in Model.ClientReferences)
+            {
+                if (!string.IsNullOrEmpty(reference.LogoUrl))
+                {
+                    <img src="@reference.LogoUrl" alt="@reference.ClientName" style="max-height:48px" title="@reference.ClientName" />
+                }
+                else
+                {
+                    <span class="badge bg-secondary">@reference.ClientName</span>
+                }
+            }
+        </div>
+    </section>
+}
+
+@if (Model.LatestNews.Any())
+{
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Son Haberler</h2>
+            <a asp-controller="News" asp-action="Index">Tümünü Gör &rarr;</a>
+        </div>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            @foreach (var post in Model.LatestNews)
+            {
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@post.Title</h5>
+                            <p class="card-text">@post.Summary</p>
+                            <p class="text-muted small">@post.PublishedAt.ToString("dd.MM.yyyy")</p>
+                        </div>
+                        <div class="card-footer">
+                            <a asp-controller="News" asp-action="Details" asp-route-slug="@post.Slug" class="btn btn-sm btn-outline-dark">Devamını Oku</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}

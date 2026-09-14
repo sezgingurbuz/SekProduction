@@ -1,0 +1,42 @@
+@model IEnumerable<SekProduction.Web.Models.EventSchedule>
+@{
+    var production = ViewData["Production"] as SekProduction.Web.Models.Production;
+    ViewData["Title"] = "Etkinlik Günleri";
+}
+
+<h1>Etkinlik Günleri &mdash; @production?.Title</h1>
+
+<p>
+    <a asp-action="Create" asp-route-productionId="@production?.Id">Yeni Etkinlik Tarihi Ekle</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.EventDate)</th>
+            <th>@Html.DisplayNameFor(model => model.Venue)</th>
+            <th>@Html.DisplayNameFor(model => model.City)</th>
+            <th>@Html.DisplayNameFor(model => model.TicketUrl)</th>
+            <th>@Html.DisplayNameFor(model => model.DisplayOrder)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
+            <td>@Html.DisplayFor(modelItem => item.Venue)</td>
+            <td>@Html.DisplayFor(modelItem => item.City)</td>
+            <td>@Html.DisplayFor(modelItem => item.TicketUrl)</td>
+            <td>@Html.DisplayFor(modelItem => item.DisplayOrder)</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+<div>
+    <a asp-area="Admin" asp-controller="Productions" asp-action="Index">Yapımlara Dön</a>
+</div>

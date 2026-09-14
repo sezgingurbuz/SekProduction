@@ -1,0 +1,86 @@
+@model Production
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<a asp-action="Index" class="d-inline-block mb-3">&larr; Tüm Yapımlar</a>
+
+<div class="row">
+    <div class="col-md-7">
+        @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+        {
+            <img src="@Model.CoverImageUrl" class="img-fluid rounded mb-3" alt="@Model.Title" />
+        }
+    </div>
+    <div class="col-md-5">
+        <h1>@Model.Title</h1>
+        <p class="text-muted">
+            @Model.Category.GetDisplayName()
+            @if (Model.Year is not null)
+            {
+                <text> &middot; @Model.Year</text>
+            }
+        </p>
+        @if (!string.IsNullOrEmpty(Model.ClientName))
+        {
+            <p><strong>Yönetmen / Sanatçı:</strong> @Model.ClientName</p>
+        }
+        @if (!string.IsNullOrEmpty(Model.ShortDescription))
+        {
+            <p class="lead">@Model.ShortDescription</p>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Description))
+{
+    <div class="mt-4">
+        <p style="white-space: pre-line">@Model.Description</p>
+    </div>
+}
+
+@{
+    var upcomingDates = Model.EventSchedules
+        .Where(e => e.EventDate >= DateTime.UtcNow.Date)
+        .OrderBy(e => e.EventDate)
+        .ToList();
+}
+
+<div class="mt-5">
+    <h2 class="mb-3">Etkinlik Günleri</h2>
+    @if (!upcomingDates.Any())
+    {
+        <p class="text-muted">Yeni etkinlik tarihleri yakında duyurulacak.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Mekan</th>
+                        <th>Şehir</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var schedule in upcomingDates)
+                    {
+                        <tr>
+                            <td>@schedule.EventDate.ToString("dd MMMM yyyy, HH:mm")</td>
+                            <td>@schedule.Venue</td>
+                            <td>@schedule.City</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(schedule.TicketUrl))
+                                {
+                                    <a href="@schedule.TicketUrl" target="_blank" rel="noopener" class="btn btn-sm btn-dark">Bilet Al</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
