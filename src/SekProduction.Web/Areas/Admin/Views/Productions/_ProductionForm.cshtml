@@ -11,6 +11,25 @@
         <div class="admin-card p-4">
             <h2 class="h6 text-uppercase text-muted mb-3">Genel Bilgiler</h2>
 
+            <div class="mb-4">
+                <div class="form-label fw-semibold">Sitede listeleneceği menü</div>
+                <div class="d-flex flex-wrap gap-2" role="radiogroup">
+                    @foreach (var category in Enum.GetValues<ProductionCategory>())
+                    {
+                        var id = $"category-{category}";
+                        <input type="radio" class="btn-check" name="@Html.NameFor(m => m.Category)" id="@id" value="@category" checked="@(Model.Category == category)" autocomplete="off" />
+                        <label class="btn btn-outline-primary" for="@id" title="@category.GetDescription()">@category.GetDisplayName()</label>
+                    }
+                </div>
+                <div class="form-text">
+                    @foreach (var category in Enum.GetValues<ProductionCategory>())
+                    {
+                        <div><strong>@category.GetDisplayName():</strong> @category.GetDescription()</div>
+                    }
+                </div>
+                <span asp-validation-for="Category" class="text-danger small"></span>
+            </div>
+
             <div class="mb-3">
                 <label asp-for="Title" class="form-label fw-semibold"></label>
                 <input asp-for="Title" class="form-control form-control-lg" placeholder="Örn: Hamlet" data-slug-source />
@@ -118,18 +137,6 @@
 
         <div class="admin-card p-4 mb-4">
             <h2 class="h6 text-uppercase text-muted mb-3">Yayın Ayarları</h2>
-
-            <div class="mb-3">
-                <label asp-for="Category" class="form-label fw-semibold"></label>
-                <select asp-for="Category" class="form-select" asp-items="Html.GetEnumSelectList<ProductionCategory>()"></select>
-                <div class="form-text">
-                    @foreach (var category in Enum.GetValues<ProductionCategory>())
-                    {
-                        <div><strong>@category.GetDisplayName():</strong> @category.GetDescription()</div>
-                    }
-                </div>
-                <span asp-validation-for="Category" class="text-danger small"></span>
-            </div>
 
             <div class="row g-3 mb-3">
                 <div class="col-6">

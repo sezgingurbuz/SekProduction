@@ -21,25 +21,14 @@ body {
   margin-bottom: 60px;
 }
 
-/* Yapımlar sayfası */
-.productions-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem;
-}
-
-.productions-section {
-  scroll-margin-top: 1rem;
-  margin-bottom: 3.5rem;
-}
-
-.productions-section__header {
+/* Menü başlığı sayfaları (Chaplin Sanat, Chaplin Çocuk Sanat, Sek Production) */
+.productions-header {
   border-bottom: 2px solid #212529;
   padding-bottom: .75rem;
   margin-bottom: 1.5rem;
 }
 
-.productions-section__header h2 {
+.productions-header h1 {
   margin-bottom: .25rem;
 }
 

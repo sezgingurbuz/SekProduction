@@ -3,22 +3,73 @@
 @{
     ViewData["Title"] = "Yapımlar";
     var today = DateTime.UtcNow.Date;
+    var selectedCategory = ViewData["SelectedCategory"] as ProductionCategory?;
+    var counts = (Dictionary<ProductionCategory, int>)ViewData["CategoryCounts"]!;
 }
 
 <div class="admin-page-header">
     <div>
         <h1>Yapımlar</h1>
-        <div class="text-muted small">Toplam @Model.Count() yapım</div>
+        <div class="text-muted small">
+            @if (selectedCategory is null)
+            {
+                <text>Toplam @Model.Count() yapım</text>
+            }
+            else
+            {
+                <text>@selectedCategory.Value.GetDisplayName() menüsünde @Model.Count() yapım</text>
+            }
+        </div>
     </div>
-    <a asp-action="Create" class="btn btn-primary">+ Yeni Yapım</a>
+    @if (selectedCategory is not null)
+    {
+        <a asp-action="Create" asp-route-category="@selectedCategory" class="btn btn-primary">+ @selectedCategory.Value.GetDisplayName() Yapımı Ekle</a>
+    }
+    else
+    {
+        <div class="dropdown">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">+ Yeni Yapım</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Hangi menüye eklenecek?</h6></li>
+                @foreach (var category in Enum.GetValues<ProductionCategory>())
+                {
+                    <li><a class="dropdown-item" asp-action="Create" asp-route-category="@category">@category.GetDisplayName()</a></li>
+                }
+            </ul>
+        </div>
+    }
 </div>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link @(selectedCategory is null ? "active" : "")" asp-area="Admin" asp-action="Index">
+            Tümü <span class="badge rounded-pill bg-light text-dark border ms-1">@counts.Values.Sum()</span>
+        </a>
+    </li>
+    @foreach (var category in Enum.GetValues<ProductionCategory>())
+    {
+        <li class="nav-item">
+            <a class="nav-link @(selectedCategory == category ? "active" : "")" asp-area="Admin" asp-action="Index" asp-route-category="@category">
+                @category.GetDisplayName() <span class="badge rounded-pill bg-light text-dark border ms-1">@counts.GetValueOrDefault(category)</span>
+            </a>
+        </li>
+    }
+</ul>
 
 <div class="admin-card">
     @if (!Model.Any())
     {
         <div class="admin-empty">
-            <p class="mb-3">Henüz hiç yapım eklenmedi.</p>
-            <a asp-action="Create" class="btn btn-outline-primary">İlk yapımı ekle</a>
+            @if (selectedCategory is null)
+            {
+                <p class="mb-3">Henüz hiç yapım eklenmedi.</p>
+                <a asp-action="Create" class="btn btn-outline-primary">İlk yapımı ekle</a>
+            }
+            else
+            {
+                <p class="mb-3">@selectedCategory.Value.GetDisplayName() menüsünde henüz yapım yok.</p>
+                <a asp-action="Create" asp-route-category="@selectedCategory" class="btn btn-outline-primary">İlk yapımı ekle</a>
+            }
         </div>
     }
     else
@@ -29,7 +80,7 @@
                     <tr>
                         <th style="width: 88px;"></th>
                         <th>Yapım</th>
-                        <th>Kategori</th>
+                        <th>Menü</th>
                         <th>Yakın Etkinlik</th>
                         <th>Durum</th>
                         <th class="text-center">Sıra</th>
@@ -57,7 +108,7 @@
                                 <div class="text-muted small">/Yapimlar/@item.Slug</div>
                             </td>
                             <td>
-                                <span class="badge rounded-pill text-bg-light border">@item.Category.GetDisplayName()</span>
+                                <span class="badge rounded-pill bg-light text-dark border">@item.Category.GetDisplayName()</span>
                                 @if (item.Year is not null)
                                 {
                                     <div class="text-muted small mt-1">@item.Year</div>
@@ -83,15 +134,15 @@
                             <td>
                                 @if (item.IsPublished)
                                 {
-                                    <span class="badge text-bg-success">Yayında</span>
+                                    <span class="badge bg-success">Yayında</span>
                                 }
                                 else
                                 {
-                                    <span class="badge text-bg-secondary">Taslak</span>
+                                    <span class="badge bg-secondary">Taslak</span>
                                 }
                                 @if (item.IsFeatured)
                                 {
-                                    <span class="badge text-bg-warning">Öne Çıkan</span>
+                                    <span class="badge bg-warning text-dark">Öne Çıkan</span>
                                 }
                             </td>
                             <td class="text-center">@item.DisplayOrder</td>

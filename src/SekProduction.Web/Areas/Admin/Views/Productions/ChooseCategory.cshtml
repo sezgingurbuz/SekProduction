@@ -1,0 +1,24 @@
+@{
+    ViewData["Title"] = "Yeni Yapım";
+}
+
+<div class="admin-page-header">
+    <div>
+        <a asp-area="Admin" asp-action="Index" class="text-decoration-none small">&larr; Yapımlar</a>
+        <h1>Yeni Yapım</h1>
+        <div class="text-muted small">Yapım sitede hangi menü altında listelenecek?</div>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    @foreach (var category in Enum.GetValues<ProductionCategory>())
+    {
+        <div class="col">
+            <a asp-action="Create" asp-route-category="@category" class="admin-card admin-choice d-block h-100 p-4 text-decoration-none text-reset">
+                <div class="h5 fw-semibold mb-1">@category.GetDisplayName()</div>
+                <div class="text-muted small mb-3">@category.GetDescription()</div>
+                <span class="text-primary small fw-semibold">Bu menüye ekle &rarr;</span>
+            </a>
+        </div>
+    }
+</div>

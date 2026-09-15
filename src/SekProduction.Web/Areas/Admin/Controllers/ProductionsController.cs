@@ -28,9 +28,20 @@ namespace SekProduction.Web.Areas.Admin.Controllers
         }
 
         // GET: Productions
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(ProductionCategory? category)
         {
+            if (category is not null && !Enum.IsDefined(category.Value))
+            {
+                category = null;
+            }
+
+            ViewData["SelectedCategory"] = category;
+            ViewData["CategoryCounts"] = await _context.Productions
+                .GroupBy(p => p.Category)
+                .ToDictionaryAsync(g => g.Key, g => g.Count());
+
             var productions = await _context.Productions
+                .Where(p => category == null || p.Category == category)
                 .Include(p => p.EventSchedules)
                 .Include(p => p.CastMembers)
                 .Include(p => p.Photos)
@@ -65,9 +76,15 @@ namespace SekProduction.Web.Areas.Admin.Controllers
         }
 
         // GET: Productions/Create
-        public IActionResult Create()
+        public IActionResult Create(ProductionCategory? category)
         {
-            return View(new Production());
+            // Önce yapımın hangi menü başlığı altında listeleneceği seçilir.
+            if (category is null || !Enum.IsDefined(category.Value))
+            {
+                return View("ChooseCategory");
+            }
+
+            return View(new Production { Category = category.Value });
         }
 
         // POST: Productions/Create
@@ -87,8 +104,8 @@ namespace SekProduction.Web.Areas.Admin.Controllers
                 production.CreatedAt = DateTime.UtcNow;
                 _context.Add(production);
                 await _context.SaveChangesAsync();
-                TempData["StatusMessage"] = $"\"{production.Title}\" eklendi.";
-                return RedirectToAction(nameof(Index), new { area = "Admin" });
+                TempData["StatusMessage"] = $"\"{production.Title}\" {production.Category.GetDisplayName()} menüsüne eklendi.";
+                return RedirectToAction(nameof(Index), new { area = "Admin", category = production.Category });
             }
 
             return View(production);
@@ -170,7 +187,7 @@ namespace SekProduction.Web.Areas.Admin.Controllers
 
             _images.Delete(imageToDelete);
             TempData["StatusMessage"] = $"\"{production.Title}\" güncellendi.";
-            return RedirectToAction(nameof(Index), new { area = "Admin" });
+            return RedirectToAction(nameof(Index), new { area = "Admin", category = production.Category });
         }
 
         // GET: Productions/Delete/5
@@ -229,6 +246,11 @@ namespace SekProduction.Web.Areas.Admin.Controllers
 
         private void ValidateInput(Production production, IFormFile? coverImage)
         {
+            if (!Enum.IsDefined(production.Category))
+            {
+                ModelState.AddModelError(nameof(Production.Category), "Yapımın listeleneceği menüyü seçin.");
+            }
+
             if (coverImage != null && _images.Validate(coverImage) is { } error)
             {
                 ModelState.AddModelError("coverImage", error);

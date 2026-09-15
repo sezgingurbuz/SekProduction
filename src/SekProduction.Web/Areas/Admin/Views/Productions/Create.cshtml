@@ -6,8 +6,9 @@
 
 <div class="admin-page-header">
     <div>
-        <a asp-area="Admin" asp-action="Index" class="text-decoration-none small">&larr; Yapımlar</a>
+        <a asp-area="Admin" asp-action="Index" asp-route-category="@Model.Category" class="text-decoration-none small">&larr; Yapımlar</a>
         <h1>Yeni Yapım</h1>
+        <div class="text-muted small">@Model.Category.GetDisplayName() menüsüne ekleniyor</div>
     </div>
 </div>
 

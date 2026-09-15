@@ -5,7 +5,6 @@ using SekProduction.Web.Models;
 
 namespace SekProduction.Web.Controllers;
 
-[Route("Yapimlar")]
 public class ProductionsController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -15,20 +14,34 @@ public class ProductionsController : Controller
         _context = context;
     }
 
-    [HttpGet("")]
-    public async Task<IActionResult> Index()
+    // Yapımlar artık menüdeki başlıklar altında listeleniyor; eski tüm-yapımlar adresi anasayfaya gider.
+    [HttpGet("Yapimlar")]
+    public IActionResult Index()
     {
+        return RedirectToActionPermanent("Index", "Home");
+    }
+
+    [HttpGet("{categorySlug:regex(" + ProductionCategoryRoutes.SlugPattern + ")}")]
+    public async Task<IActionResult> Category(string categorySlug)
+    {
+        var category = ProductionCategoryRoutes.FromSlug(categorySlug);
+        if (category is null)
+        {
+            return NotFound();
+        }
+
         var productions = await _context.Productions
-            .Where(p => p.IsPublished)
+            .Where(p => p.IsPublished && p.Category == category)
             .Include(p => p.EventSchedules)
             .OrderBy(p => p.DisplayOrder)
             .ThenByDescending(p => p.Year)
             .ToListAsync();
 
+        ViewData["Category"] = category.Value;
         return View(productions);
     }
 
-    [HttpGet("{slug}")]
+    [HttpGet("Yapimlar/{slug}")]
     public async Task<IActionResult> Details(string slug)
     {
         var production = await _context.Productions

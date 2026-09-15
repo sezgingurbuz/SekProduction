@@ -1,0 +1,64 @@
+@model List<Production>
+@{
+    var category = (ProductionCategory)ViewData["Category"]!;
+    ViewData["Title"] = category.GetDisplayName();
+
+    var today = DateTime.Now.Date;
+    var emptyMessage = category switch
+    {
+        ProductionCategory.ChaplinCocukSanat => "Yeni çocuk oyunlarımız yakında duyurulacak.",
+        ProductionCategory.SekProduction => "Yeni konser ve etkinliklerimiz yakında duyurulacak.",
+        _ => "Yeni oyunlarımız yakında duyurulacak."
+    };
+}
+
+<header class="productions-header">
+    <h1>@category.GetDisplayName()</h1>
+    <p class="text-muted mb-0">@category.GetDescription()</p>
+</header>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">@emptyMessage</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+        @foreach (var production in Model)
+        {
+            var nextDate = production.EventSchedules
+                .Where(e => e.EventDate >= today)
+                .OrderBy(e => e.EventDate)
+                .FirstOrDefault();
+            <div class="col">
+                <a asp-action="Details" asp-route-slug="@production.Slug" class="production-card card h-100 text-decoration-none text-reset">
+                    <div class="production-card__poster">
+                        @if (!string.IsNullOrEmpty(production.CoverImageUrl))
+                        {
+                            <img src="@production.CoverImageUrl" alt="@production.Title" loading="lazy" />
+                        }
+                        else
+                        {
+                            <span>@production.Title</span>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <h2 class="h5 card-title">@production.Title</h2>
+                        @if (!string.IsNullOrEmpty(production.ShortDescription))
+                        {
+                            <p class="card-text small">@production.ShortDescription</p>
+                        }
+                        @if (nextDate is not null)
+                        {
+                            <p class="text-muted small mb-0">@nextDate.EventDate.ToString("dd MMMM yyyy")@(nextDate.City is null ? "" : $" · {nextDate.City}")</p>
+                        }
+                        else if (production.Year is not null)
+                        {
+                            <p class="text-muted small mb-0">@production.Year</p>
+                        }
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}

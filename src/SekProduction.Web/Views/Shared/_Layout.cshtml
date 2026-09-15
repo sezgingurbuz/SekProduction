@@ -20,15 +20,12 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Anasayfa</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Productions" asp-action="Index">Yapımlar</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Team" asp-action="Index">Ekip</a>
-                        </li>
+                        @foreach (var category in new[] { ProductionCategory.SekProduction, ProductionCategory.ChaplinSanat, ProductionCategory.ChaplinCocukSanat })
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Productions" asp-action="Category" asp-route-categorySlug="@category.GetSlug()">@category.GetDisplayName()</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-light" asp-area="" asp-controller="News" asp-action="Index">Haberler</a>
                         </li>

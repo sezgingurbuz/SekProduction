@@ -35,7 +35,7 @@ public class Production
     [Display(Name = "Kapak Görseli URL")]
     public string? CoverImageUrl { get; set; }
 
-    [Display(Name = "Kategori")]
+    [Display(Name = "Menü")]
     public ProductionCategory Category { get; set; }
 
     [Display(Name = "Yıl")]

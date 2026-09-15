@@ -13,10 +13,7 @@
 </div>
 
 <section class="mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Bu Sezon Sahnede</h2>
-        <a asp-controller="Productions" asp-action="Index">Tümünü Gör &rarr;</a>
-    </div>
+    <h2 class="mb-3">Bu Sezon Sahnede</h2>
     @if (!Model.FeaturedProductions.Any())
     {
         <p class="text-muted">Henüz öne çıkan bir oyun eklenmedi.</p>
