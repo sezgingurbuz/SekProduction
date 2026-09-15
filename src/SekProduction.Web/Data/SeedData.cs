@@ -48,7 +48,7 @@ public static class SeedData
                 Slug = "ornek-tiyatro-oyunu",
                 ShortDescription = "Bu sezon sahnelenen örnek tiyatro oyunu.",
                 Description = "Oyunun künyesi, oyuncu kadrosu ve konu özeti buraya eklenecek.",
-                Category = ProductionCategory.Theatre,
+                Category = ProductionCategory.ChaplinSanat,
                 Year = DateTime.UtcNow.Year,
                 ClientName = "Yönetmen Adı",
                 AgeLimit = "16+",

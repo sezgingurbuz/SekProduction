@@ -122,6 +122,12 @@
             <div class="mb-3">
                 <label asp-for="Category" class="form-label fw-semibold"></label>
                 <select asp-for="Category" class="form-select" asp-items="Html.GetEnumSelectList<ProductionCategory>()"></select>
+                <div class="form-text">
+                    @foreach (var category in Enum.GetValues<ProductionCategory>())
+                    {
+                        <div><strong>@category.GetDisplayName():</strong> @category.GetDescription()</div>
+                    }
+                </div>
                 <span asp-validation-for="Category" class="text-danger small"></span>
             </div>
 

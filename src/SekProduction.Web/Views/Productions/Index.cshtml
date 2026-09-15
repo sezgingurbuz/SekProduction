@@ -1,59 +1,79 @@
 @model List<Production>
 @{
     ViewData["Title"] = "Yapımlar";
-    var selectedCategory = ViewData["SelectedCategory"] as ProductionCategory?;
-}
 
-<h1 class="mb-4">Yapımlarımız</h1>
-
-<div class="mb-4 d-flex flex-wrap gap-2">
-    <a asp-action="Index" class="btn btn-sm @(selectedCategory is null ? "btn-dark" : "btn-outline-dark")">Tümü</a>
-    @foreach (var category in Enum.GetValues<ProductionCategory>())
+    var today = DateTime.Now.Date;
+    var groups = new[]
     {
-        <a asp-action="Index" asp-route-category="@category" class="btn btn-sm @(selectedCategory == category ? "btn-dark" : "btn-outline-dark")">
-            @category.GetDisplayName()
-        </a>
-    }
-</div>
-
-@if (!Model.Any())
-{
-    <p class="text-muted">Bu kategoride henüz yapım bulunmuyor.</p>
+        (Category: ProductionCategory.ChaplinSanat, Anchor: "chaplin-sanat", Empty: "Yeni yetişkin oyunlarımız yakında duyurulacak."),
+        (Category: ProductionCategory.ChaplinCocukSanat, Anchor: "chaplin-cocuk-sanat", Empty: "Yeni çocuk oyunlarımız yakında duyurulacak."),
+        (Category: ProductionCategory.SekProduction, Anchor: "sek-production", Empty: "Yeni konser ve etkinliklerimiz yakında duyurulacak.")
+    };
 }
-else
+
+<h1 class="mb-3">Yapımlarımız</h1>
+
+<nav class="productions-nav mb-5" aria-label="Yapım başlıkları">
+    @foreach (var group in groups)
+    {
+        <a href="#@group.Anchor" class="btn btn-outline-dark">@group.Category.GetDisplayName()</a>
+    }
+</nav>
+
+@foreach (var group in groups)
 {
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @foreach (var production in Model)
+    var items = Model.Where(p => p.Category == group.Category).ToList();
+
+    <section class="productions-section" id="@group.Anchor">
+        <header class="productions-section__header">
+            <h2>@group.Category.GetDisplayName()</h2>
+            <p class="text-muted mb-0">@group.Category.GetDescription()</p>
+        </header>
+
+        @if (!items.Any())
         {
-            <div class="col">
-                <div class="card h-100">
-                    @if (!string.IsNullOrEmpty(production.CoverImageUrl))
-                    {
-                        <img src="@production.CoverImageUrl" class="card-img-top" alt="@production.Title" />
-                    }
-                    <div class="card-body">
-                        <h5 class="card-title">@production.Title</h5>
-                        <p class="card-text">@production.ShortDescription</p>
-                        @{
-                            var nextDate = production.EventSchedules
-                                .Where(e => e.EventDate >= DateTime.UtcNow.Date)
-                                .OrderBy(e => e.EventDate)
-                                .FirstOrDefault();
-                        }
-                        @if (nextDate is not null)
-                        {
-                            <p class="text-muted small mb-0">@nextDate.EventDate.ToString("dd MMMM yyyy")@(nextDate.City is null ? "" : $" · {nextDate.City}")</p>
-                        }
-                        else if (production.Year is not null)
-                        {
-                            <p class="text-muted small mb-0">@production.Year</p>
-                        }
+            <p class="text-muted">@group.Empty</p>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+                @foreach (var production in items)
+                {
+                    var nextDate = production.EventSchedules
+                        .Where(e => e.EventDate >= today)
+                        .OrderBy(e => e.EventDate)
+                        .FirstOrDefault();
+                    <div class="col">
+                        <a asp-action="Details" asp-route-slug="@production.Slug" class="production-card card h-100 text-decoration-none text-reset">
+                            <div class="production-card__poster">
+                                @if (!string.IsNullOrEmpty(production.CoverImageUrl))
+                                {
+                                    <img src="@production.CoverImageUrl" alt="@production.Title" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span>@production.Title</span>
+                                }
+                            </div>
+                            <div class="card-body">
+                                <h3 class="h5 card-title">@production.Title</h3>
+                                @if (!string.IsNullOrEmpty(production.ShortDescription))
+                                {
+                                    <p class="card-text small">@production.ShortDescription</p>
+                                }
+                                @if (nextDate is not null)
+                                {
+                                    <p class="text-muted small mb-0">@nextDate.EventDate.ToString("dd MMMM yyyy")@(nextDate.City is null ? "" : $" · {nextDate.City}")</p>
+                                }
+                                else if (production.Year is not null)
+                                {
+                                    <p class="text-muted small mb-0">@production.Year</p>
+                                }
+                            </div>
+                        </a>
                     </div>
-                    <div class="card-footer">
-                        <a asp-action="Details" asp-route-slug="@production.Slug" class="btn btn-sm btn-outline-dark">Detaylar</a>
-                    </div>
-                </div>
+                }
             </div>
         }
-    </div>
+    </section>
 }

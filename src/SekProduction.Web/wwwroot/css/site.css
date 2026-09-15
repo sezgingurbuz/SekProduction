@@ -20,3 +20,56 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Yapımlar sayfası */
+.productions-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.productions-section {
+  scroll-margin-top: 1rem;
+  margin-bottom: 3.5rem;
+}
+
+.productions-section__header {
+  border-bottom: 2px solid #212529;
+  padding-bottom: .75rem;
+  margin-bottom: 1.5rem;
+}
+
+.productions-section__header h2 {
+  margin-bottom: .25rem;
+}
+
+.production-card {
+  overflow: hidden;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.production-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .12);
+}
+
+.production-card__poster {
+  aspect-ratio: 3 / 4;
+  background: #212529;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+}
+
+.production-card__poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.production-card__poster span {
+  padding: 1rem;
+}

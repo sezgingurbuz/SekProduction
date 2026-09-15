@@ -16,17 +16,10 @@ public class ProductionsController : Controller
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(ProductionCategory? category)
+    public async Task<IActionResult> Index()
     {
-        var query = _context.Productions.Where(p => p.IsPublished);
-
-        if (category is not null)
-        {
-            query = query.Where(p => p.Category == category);
-        }
-
-        ViewData["SelectedCategory"] = category;
-        var productions = await query
+        var productions = await _context.Productions
+            .Where(p => p.IsPublished)
             .Include(p => p.EventSchedules)
             .OrderBy(p => p.DisplayOrder)
             .ThenByDescending(p => p.Year)

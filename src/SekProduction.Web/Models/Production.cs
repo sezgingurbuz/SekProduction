@@ -6,16 +6,12 @@ namespace SekProduction.Web.Models;
 
 public enum ProductionCategory
 {
-    [Display(Name = "Tiyatro Oyunu")]
-    Theatre,
-    [Display(Name = "Konser")]
-    Concert,
-    [Display(Name = "Müzik Videosu")]
-    MusicVideo,
-    [Display(Name = "Sanatçı Yönetimi")]
-    ArtistManagement,
-    [Display(Name = "Diğer")]
-    Other
+    [Display(Name = "Chaplin Sanat", Description = "Yetişkinler için sahnelediğimiz tiyatro oyunları")]
+    ChaplinSanat = 0,
+    [Display(Name = "Chaplin Çocuk Sanat", Description = "Çocuklar ve aileler için tiyatro oyunları")]
+    ChaplinCocukSanat = 1,
+    [Display(Name = "Sek Production", Description = "Konserler ve diğer etkinlikler")]
+    SekProduction = 2
 }
 
 public class Production
