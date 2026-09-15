@@ -59,6 +59,7 @@ public class TourCalendarViewModel
     public required List<Production> Productions { get; init; }
     public required Dictionary<int, string> ProductionColors { get; init; }
     public required List<string> Cities { get; init; }
+    public required List<string> CitySuggestions { get; init; }
     public required List<string> Venues { get; init; }
 
     public bool IsProductionMode => FixedProduction is not null;

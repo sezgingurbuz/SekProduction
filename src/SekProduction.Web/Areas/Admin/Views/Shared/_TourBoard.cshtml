@@ -134,6 +134,47 @@
     </div>
 </div>
 
+@{
+    object MapItem(EventSchedule s) => new
+    {
+        city = s.City,
+        day = s.EventDate.ToString("d MMM ddd"),
+        time = s.EventDate.ToString("HH:mm"),
+        production = s.Production?.Title,
+        color = Model.ColorFor(s.ProductionId),
+        venue = s.Venue,
+        hasTicket = !string.IsNullOrEmpty(s.TicketUrl)
+    };
+    var mapData = new
+    {
+        month = monthSessions.Where(s => s.IsReady).Select(MapItem),
+        upcoming = Model.UpcomingSessions.Where(s => s.IsReady).Select(MapItem)
+    };
+}
+<div class="admin-card p-3 mb-3" data-tour-map data-src="@Url.Content("~/img/turkiye.svg")" style="--map-c: @(productionMode ? Model.ColorFor(Model.FixedProduction!.Id) : "#2563eb")">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <h2 class="tour-side-title mb-0 me-auto">Türkiye Haritası <span class="text-muted fw-normal text-lowercase" data-map-summary></span></h2>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Harita dönemi" data-map-body>
+            <button type="button" class="btn btn-secondary" data-map-scope="month">@Model.Month.ToString("MMMM yyyy")</button>
+            <button type="button" class="btn btn-outline-secondary" data-map-scope="upcoming">Yaklaşan tümü</button>
+        </div>
+        <button type="button" class="btn btn-link btn-sm text-muted" data-map-toggle>Haritayı gizle</button>
+    </div>
+    <div data-map-body>
+        <div class="tour-map" data-map-canvas>
+            <div class="text-muted small p-4 text-center">Harita yükleniyor…</div>
+        </div>
+        <div class="tour-map-legend">
+            <span><i class="tour-map-swatch" data-level="1"></i>1 seans</span>
+            <span><i class="tour-map-swatch" data-level="2"></i>2–3 seans</span>
+            <span><i class="tour-map-swatch" data-level="3"></i>4+ seans</span>
+            <span class="text-muted">İlin üzerine gelince seanslar görünür, tıklayınca kart sabitlenir.</span>
+        </div>
+        <div class="alert alert-warning py-2 px-3 small mt-2 mb-0" data-map-unmatched hidden></div>
+    </div>
+    <script type="application/json" data-map-data>@Json.Serialize(mapData)</script>
+</div>
+
 <div class="row g-3">
     <div class="col-xl-9">
         @if (!f.IsListView)
@@ -313,7 +354,7 @@
                 else
                 {
                     <ul class="tour-side-list">
-                        @foreach (var s in Model.UpcomingSessions)
+                        @foreach (var s in Model.UpcomingSessions.Take(12))
                         {
                             <li>
                                 <a asp-action="Index" asp-all-route-data="Query(new DateTime(s.EventDate.Year, s.EventDate.Month, 1))">
@@ -529,7 +570,7 @@
                 </div>
                 <div class="form-text mt-2">Şehri girilmeyen seanslar sitede gösterilmez.</div>
                 <datalist id="tourCities">
-                    @foreach (var c in Model.Cities)
+                    @foreach (var c in Model.CitySuggestions)
                     {
                         <option value="@c"></option>
                     }

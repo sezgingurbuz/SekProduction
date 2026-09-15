@@ -47,32 +47,16 @@ public class TourCalendarService
             .ThenBy(p => p.Title)
             .ToListAsync();
 
-        var query = _context.EventSchedules
-            .Include(e => e.Production)
-            .Where(e => e.EventDate >= gridStart && e.EventDate < gridEnd);
+        var sessions = await Filtered(filter)
+            .Where(e => e.EventDate >= gridStart && e.EventDate < gridEnd)
+            .OrderBy(e => e.EventDate)
+            .ToListAsync();
 
-        if (filter.Category is not null)
-        {
-            query = query.Where(e => e.Production!.Category == filter.Category);
-        }
-        if (filter.ProductionId is not null)
-        {
-            query = query.Where(e => e.ProductionId == filter.ProductionId);
-        }
-        if (!string.IsNullOrWhiteSpace(filter.City))
-        {
-            query = query.Where(e => e.City == filter.City);
-        }
-
-        var sessions = await query.OrderBy(e => e.EventDate).ToListAsync();
-
-        var upcoming = fixedProduction is null
-            ? new List<EventSchedule>()
-            : await _context.EventSchedules
-                .Where(e => e.ProductionId == fixedProduction.Id && e.EventDate >= today)
-                .OrderBy(e => e.EventDate)
-                .Take(12)
-                .ToListAsync();
+        // Haritanın "Yaklaşan tümü" görünümü ve yapım sayfasının yan paneli için
+        var upcoming = await Filtered(filter)
+            .Where(e => e.EventDate >= today)
+            .OrderBy(e => e.EventDate)
+            .ToListAsync();
 
         var cities = await _context.EventSchedules
             .Where(e => e.City != null && e.City != "")
@@ -100,7 +84,28 @@ public class TourCalendarService
                 .Select((p, i) => (p.Id, Color: Palette[i % Palette.Length]))
                 .ToDictionary(x => x.Id, x => x.Color),
             Cities = cities.OrderBy(c => c, TurkishComparer).ToList(),
+            CitySuggestions = cities.Concat(TurkeyProvinces.Names).Distinct(TurkishComparer).OrderBy(c => c, TurkishComparer).ToList(),
             Venues = venues.OrderBy(v => v, TurkishComparer).ToList()
         };
+    }
+
+    private IQueryable<EventSchedule> Filtered(TourFilter filter)
+    {
+        var query = _context.EventSchedules.Include(e => e.Production).AsQueryable();
+
+        if (filter.Category is not null)
+        {
+            query = query.Where(e => e.Production!.Category == filter.Category);
+        }
+        if (filter.ProductionId is not null)
+        {
+            query = query.Where(e => e.ProductionId == filter.ProductionId);
+        }
+        if (!string.IsNullOrWhiteSpace(filter.City))
+        {
+            query = query.Where(e => e.City == filter.City);
+        }
+
+        return query;
     }
 }

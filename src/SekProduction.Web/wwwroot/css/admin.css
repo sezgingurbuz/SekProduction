@@ -347,6 +347,128 @@ body.admin {
   vertical-align: .05em;
 }
 
+/* Türkiye haritası */
+.tour-map {
+  position: relative;
+}
+
+.tour-map svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 460px;
+  margin: 0 auto;
+}
+
+/* İl olmayan parçalar (Güney Kıbrıs) soluk kalır */
+.tour-map svg path {
+  fill: #f5f6f7;
+  stroke: #fff;
+  stroke-width: .8;
+}
+
+.tour-map g[data-plakakodu] path {
+  fill: #e9ecef;
+  stroke: #fff;
+  stroke-width: .8;
+  transition: fill .15s, filter .15s;
+}
+
+.tour-map g[data-level="1"] path,
+.tour-map-swatch[data-level="1"] {
+  fill: color-mix(in srgb, var(--map-c) 35%, #fff);
+  background: color-mix(in srgb, var(--map-c) 35%, #fff);
+}
+
+.tour-map g[data-level="2"] path,
+.tour-map-swatch[data-level="2"] {
+  fill: color-mix(in srgb, var(--map-c) 65%, #fff);
+  background: color-mix(in srgb, var(--map-c) 65%, #fff);
+}
+
+.tour-map g[data-level="3"] path,
+.tour-map-swatch[data-level="3"] {
+  fill: var(--map-c);
+  background: var(--map-c);
+}
+
+.tour-map g[data-level="0"]:hover path {
+  fill: #dee2e6;
+}
+
+.tour-map g[data-level]:not([data-level="0"]) {
+  cursor: pointer;
+}
+
+.tour-map g[data-level]:not([data-level="0"]):hover path,
+.tour-map g.is-active path {
+  filter: brightness(.85);
+}
+
+.tour-map g:focus {
+  outline: none;
+}
+
+.tour-map g:focus-visible path {
+  stroke: #212529;
+  stroke-width: 1.5;
+}
+
+.tour-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem 1rem;
+  margin-top: .5rem;
+  font-size: .8rem;
+}
+
+.tour-map-swatch {
+  display: inline-block;
+  width: .9rem;
+  height: .9rem;
+  border-radius: .2rem;
+  margin-right: .35rem;
+  vertical-align: -.1em;
+}
+
+.tour-map-tooltip {
+  position: absolute;
+  z-index: 5;
+  width: 290px;
+  max-width: calc(100% - 8px);
+  padding: .6rem .75rem;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: .6rem;
+  box-shadow: 0 .5rem 1.5rem rgba(16, 24, 40, .18);
+  font-size: .8rem;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.tour-map-tooltip.is-pinned {
+  pointer-events: auto;
+  border-color: var(--map-c);
+}
+
+.tour-map-tooltip__title {
+  font-size: .95rem;
+  font-weight: 600;
+  margin-bottom: .35rem;
+}
+
+.tour-map-tooltip ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tour-map-tooltip li {
+  padding: .3rem 0;
+  border-top: 1px solid #f1f3f5;
+}
+
 .tour-selection {
   position: fixed;
   left: 50%;
