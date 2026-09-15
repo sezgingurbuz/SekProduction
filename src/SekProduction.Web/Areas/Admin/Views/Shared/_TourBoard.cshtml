@@ -177,6 +177,19 @@
 
 <div class="row g-3">
     <div class="col-xl-9">
+        @* Takvimin üstündeki ay çubuğu: kaydırırken ekranın üstünde kalır, ay değişince sayfa aynı konumda açılır. *@
+        <div class="admin-card tour-cal-header">
+            <div class="d-flex align-items-center gap-2">
+                <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-all-route-data="Query(Model.PreviousMonth)" data-keep-scroll aria-label="Önceki ay">&lsaquo;</a>
+                <span class="tour-month">@Model.Month.ToString("MMMM yyyy")</span>
+                <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-all-route-data="Query(Model.NextMonth)" data-keep-scroll aria-label="Sonraki ay">&rsaquo;</a>
+                <a class="btn btn-link btn-sm" asp-action="Index" asp-all-route-data="todayQuery" data-keep-scroll>Bugün</a>
+            </div>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Görünüm">
+                <a class="btn @(f.IsListView ? "btn-outline-secondary" : "btn-secondary")" asp-action="Index" asp-all-route-data="calendarQuery" data-keep-scroll>Takvim</a>
+                <a class="btn @(f.IsListView ? "btn-secondary" : "btn-outline-secondary")" asp-action="Index" asp-all-route-data="listQuery" data-keep-scroll>Liste</a>
+            </div>
+        </div>
         @if (!f.IsListView)
         {
             <div class="admin-card tour-cal-wrap">

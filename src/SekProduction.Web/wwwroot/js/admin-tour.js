@@ -4,6 +4,73 @@
         return;
     }
 
+    // Kaydırma konumunu koru: takvimden ay değiştirince veya kaydet/ekle/sil sonrası
+    // sayfa yeniden yüklendiğinde kullanıcı en üste atılmaz, kaldığı yerde devam eder.
+    var scrollKey = 'tourScroll:' + location.pathname.toLowerCase();
+
+    var rememberScroll = function () {
+        try {
+            sessionStorage.setItem(scrollKey, JSON.stringify({ y: window.scrollY, t: Date.now() }));
+        } catch (e) {
+            // Depolama kapalıysa sayfa her zamanki gibi en üstten açılır.
+        }
+    };
+
+    // Konum geri yüklenince en üstteki durum mesajı ekran dışında kalır; sağ üstte bildirim olarak da gösterilir.
+    var showToasts = function () {
+        var alerts = document.querySelectorAll('body > .container-fluid > .alert, body > .container > .alert');
+        if (!alerts.length) {
+            return;
+        }
+        var box = document.createElement('div');
+        box.className = 'tour-toasts';
+        alerts.forEach(function (alert) {
+            var toast = alert.cloneNode(true);
+            toast.classList.add('alert-dismissible', 'fade', 'show');
+            toast.setAttribute('role', 'status');
+            var close = document.createElement('button');
+            close.type = 'button';
+            close.className = 'btn-close';
+            close.setAttribute('aria-label', 'Kapat');
+            close.addEventListener('click', function () { toast.remove(); });
+            toast.appendChild(close);
+            box.appendChild(toast);
+            if (!alert.classList.contains('alert-danger')) {
+                setTimeout(function () {
+                    toast.style.opacity = '0';
+                    setTimeout(function () { toast.remove(); }, 400);
+                }, 5000);
+            }
+        });
+        document.body.appendChild(box);
+    };
+
+    var restoreScroll = function () {
+        var saved = null;
+        try {
+            saved = JSON.parse(sessionStorage.getItem(scrollKey));
+            sessionStorage.removeItem(scrollKey);
+        } catch (e) {
+            return;
+        }
+        // Yalnızca az önce bu sayfadan çıkılmışsa geri yükle (menüden yeniden açılışta en üstten başlar).
+        if (!saved || Date.now() - saved.t > 30000 || saved.y < 50) {
+            return;
+        }
+        // Bootstrap yumuşak kaydırma açık; açılışta aşağı kayan animasyon görünmesin.
+        window.scrollTo({ top: saved.y, behavior: 'instant' });
+        showToasts();
+    };
+
+    document.querySelectorAll('[data-keep-scroll]').forEach(function (link) {
+        link.addEventListener('click', rememberScroll);
+    });
+    document.querySelectorAll('#tourModal form, #tourDeleteForm, [data-tour-selection]').forEach(function (f) {
+        f.addEventListener('submit', rememberScroll);
+    });
+    // Harita gizleme tercihi (admin-tour-map.js) uygulandıktan sonra konum geri yüklenir.
+    document.addEventListener('DOMContentLoaded', restoreScroll);
+
     var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     var form = modalEl.querySelector('[data-tour-form]');
     var title = modalEl.querySelector('.modal-title');
@@ -214,6 +281,7 @@
                 container.appendChild(input);
             });
             forgetSelection();
+            rememberScroll();
             bulkDeleteForm.submit();
         });
 

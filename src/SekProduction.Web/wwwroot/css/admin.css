@@ -165,6 +165,37 @@ body.admin {
   color: #dc3545;
 }
 
+.tour-cal-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  margin-bottom: .5rem;
+}
+
+.tour-cal-header .tour-month {
+  display: inline-block;
+  font-size: 1.1rem;
+}
+
+.tour-toasts {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1080;
+  width: min(420px, calc(100% - 2rem));
+}
+
+.tour-toasts .alert {
+  box-shadow: 0 .5rem 1.5rem rgba(16, 24, 40, .18);
+  transition: opacity .4s;
+}
+
 .tour-cal-wrap {
   overflow-x: auto;
 }
@@ -348,8 +379,13 @@ body.admin {
 }
 
 /* Türkiye haritası */
+/* Yükseklik SVG gelmeden ayrılır; böylece harita yüklenince sayfa kaymaz. */
 .tour-map {
   position: relative;
+  aspect-ratio: 1007.478 / 527.323;
+  max-height: 460px;
+  /* Yükseklik sınırı genişliği de daralttığı için kutu ortalanır. */
+  margin-inline: auto;
 }
 
 .tour-map svg {
