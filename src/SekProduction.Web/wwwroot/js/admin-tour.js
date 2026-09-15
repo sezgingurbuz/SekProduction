@@ -71,14 +71,52 @@
     }
 
     // Gün seçimi: boş alana tıklamak günü seçer/bırakır, Shift ile aralık seçilir.
-    // Seçili günler alttaki çubuktan tek seferde eklenir.
+    // Seçili günler alttaki çubuktan tek seferde eklenir veya o günlerdeki seanslar silinir.
+    // Ay değiştirmek sayfayı yenilediği için seçim sekme oturumunda saklanır; böylece
+    // birden fazla ayda gün seçilebilir. Ekleme/silme sonrası ya da "Seçimi temizle" ile sıfırlanır.
     var calendar = document.querySelector('[data-tour-calendar]');
     var selectionForm = document.querySelector('[data-tour-selection]');
     if (calendar && selectionForm) {
         var dayCells = Array.prototype.slice.call(calendar.querySelectorAll('[data-drop-date]'));
-        var labels = {};
-        dayCells.forEach(function (cell) { labels[cell.dataset.dropDate] = cell.dataset.label; });
-        var selected = {};
+
+        // Seçim sayfaya (Turne Takvimi + filtreler ya da yapımın Etkinlik Günleri) özeldir; ay ve görünüm hariç.
+        var storageKey = (function () {
+            var params = new URLSearchParams(location.search);
+            ['year', 'month', 'view'].forEach(function (name) { params.delete(name); });
+            params.sort();
+            return 'tourSelection:' + location.pathname.toLowerCase() + '?' + params.toString();
+        })();
+
+        var loadSelection = function () {
+            try {
+                return JSON.parse(sessionStorage.getItem(storageKey)) || {};
+            } catch (e) {
+                return {};
+            }
+        };
+
+        var saveSelection = function () {
+            try {
+                if (Object.keys(selected).length) {
+                    sessionStorage.setItem(storageKey, JSON.stringify(selected));
+                } else {
+                    sessionStorage.removeItem(storageKey);
+                }
+            } catch (e) {
+                // Depolama kapalıysa seçim yalnızca bu sayfada kalır.
+            }
+        };
+
+        var forgetSelection = function () {
+            try {
+                sessionStorage.removeItem(storageKey);
+            } catch (e) {
+                // yok say
+            }
+        };
+
+        // tarih -> { label: '5 Eki', ids: ['12', '13'] }; ids o gündeki seanslardır (toplu silme için).
+        var selected = loadSelection();
         var lastIndex = null;
         var count = selectionForm.querySelector('[data-selection-count]');
         var list = selectionForm.querySelector('[data-selection-list]');
@@ -88,24 +126,39 @@
         var bulkDeleteForm = document.getElementById('tourBulkDeleteForm');
         var selectedSessionIds = [];
 
+        var otherMonths = selectionForm.querySelector('[data-selection-other-months]');
+
         var render = function () {
-            var dates = Object.keys(selected).sort();
-            selectedSessionIds = [];
+            // Ekrandaki günlerin seans listesi sayfadan tazelenir; diğer aylardakiler saklanandan gelir.
+            var visible = {};
             dayCells.forEach(function (cell) {
-                var isSelected = !!selected[cell.dataset.dropDate];
-                cell.classList.toggle('is-selected', isSelected);
-                if (isSelected) {
-                    cell.querySelectorAll('[data-tour-edit]').forEach(function (chip) {
-                        selectedSessionIds.push(chip.dataset.id);
+                var date = cell.dataset.dropDate;
+                var entry = selected[date];
+                visible[date] = true;
+                cell.classList.toggle('is-selected', !!entry);
+                if (entry) {
+                    entry.label = cell.dataset.label;
+                    entry.ids = Array.prototype.map.call(cell.querySelectorAll('[data-tour-edit]'), function (chip) {
+                        return chip.dataset.id;
                     });
                 }
             });
+
+            var dates = Object.keys(selected).sort();
+            var offscreen = dates.filter(function (d) { return !visible[d]; }).length;
+            selectedSessionIds = [];
+            dates.forEach(function (d) {
+                selectedSessionIds = selectedSessionIds.concat(selected[d].ids || []);
+            });
+            saveSelection();
+
             bulkDeleteButton.hidden = selectedSessionIds.length === 0;
             bulkDeleteCount.textContent = selectedSessionIds.length;
             selectionForm.hidden = dates.length === 0;
             document.body.classList.toggle('has-tour-selection', dates.length > 0);
             count.textContent = dates.length;
-            list.textContent = dates.map(function (d) { return labels[d]; }).join(', ');
+            otherMonths.textContent = offscreen ? '(' + offscreen + ' gün diğer aylarda)' : '';
+            list.textContent = dates.map(function (d) { return selected[d].label; }).join(', ');
             inputs.innerHTML = '';
             dates.forEach(function (d) {
                 var input = document.createElement('input');
@@ -132,12 +185,12 @@
                     var from = Math.min(lastIndex, index);
                     var to = Math.max(lastIndex, index);
                     for (var i = from; i <= to; i++) {
-                        selected[dayCells[i].dataset.dropDate] = true;
+                        selected[dayCells[i].dataset.dropDate] = selected[dayCells[i].dataset.dropDate] || {};
                     }
                 } else if (selected[date]) {
                     delete selected[date];
                 } else {
-                    selected[date] = true;
+                    selected[date] = {};
                 }
                 lastIndex = index;
                 render();
@@ -160,8 +213,14 @@
                 input.value = id;
                 container.appendChild(input);
             });
+            forgetSelection();
             bulkDeleteForm.submit();
         });
+
+        // Günler eklenince seçim tamamlanmış sayılır.
+        selectionForm.addEventListener('submit', forgetSelection);
+
+        render();
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && !modalEl.classList.contains('show')) {
                 clearSelection();
