@@ -26,7 +26,6 @@ public class TourSessionInput
     [Required(ErrorMessage = "Saat girin.")]
     public TimeSpan? Time { get; set; }
 
-    [Required(ErrorMessage = "Şehir girin.")]
     [StringLength(100)]
     public string? City { get; set; }
 
@@ -38,6 +37,12 @@ public class TourSessionInput
     public string? TicketUrl { get; set; }
 }
 
+public static class TourReturn
+{
+    public const string Tour = "tour";
+    public const string Production = "production";
+}
+
 public record TourStop(string City, DateTime From, DateTime To, List<EventSchedule> Sessions);
 
 public class TourCalendarViewModel
@@ -46,11 +51,20 @@ public class TourCalendarViewModel
     public required DateTime GridStart { get; init; }
     public required int Weeks { get; init; }
     public required TourFilter Filter { get; init; }
+
+    // Dolu ise sayfa tek bir yapımın Etkinlik Günleri takvimidir (filtreler gizlenir, yapım sabittir).
+    public Production? FixedProduction { get; init; }
     public required List<EventSchedule> Sessions { get; init; }
+    public required List<EventSchedule> UpcomingSessions { get; init; }
     public required List<Production> Productions { get; init; }
     public required Dictionary<int, string> ProductionColors { get; init; }
     public required List<string> Cities { get; init; }
     public required List<string> Venues { get; init; }
+
+    public bool IsProductionMode => FixedProduction is not null;
+
+    // Kaydetme sonrası kullanıcının döneceği sayfa (TourController bu değere göre yönlendirir).
+    public string ReturnTo => IsProductionMode ? TourReturn.Production : TourReturn.Tour;
 
     public DateTime PreviousMonth => Month.AddMonths(-1);
     public DateTime NextMonth => Month.AddMonths(1);
@@ -77,9 +91,9 @@ public class TourCalendarViewModel
         get
         {
             var stops = new List<TourStop>();
-            foreach (var session in MonthSessions)
+            foreach (var session in MonthSessions.Where(s => s.IsReady))
             {
-                var city = string.IsNullOrWhiteSpace(session.City) ? "Şehir belirtilmemiş" : session.City.Trim();
+                var city = session.City!.Trim();
                 var last = stops.LastOrDefault();
                 if (last is not null && string.Equals(last.City, city, StringComparison.CurrentCultureIgnoreCase))
                 {

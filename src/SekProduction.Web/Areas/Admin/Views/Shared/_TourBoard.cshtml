@@ -1,0 +1,548 @@
+@model TourCalendarViewModel
+@*
+    Turne Takvimi ve yapımın Etkinlik Günleri sayfasının ortak gövdesi.
+    Sayfa kendi başlığını çizer ve Scripts bölümünde admin-tour.js'i yükler.
+*@
+@{
+    var today = DateTime.Today;
+    var f = Model.Filter;
+    var productionMode = Model.IsProductionMode;
+    var monthSessions = Model.MonthSessions;
+    var conflicts = Model.ConflictDays;
+    var monthConflicts = conflicts.Count(d => d.Month == Model.Month.Month && d.Year == Model.Month.Year);
+    var route = Model.Route;
+    var missingTicket = monthSessions.Count(s => s.IsReady && string.IsNullOrEmpty(s.TicketUrl));
+    var drafts = monthSessions.Count(s => !s.IsReady);
+    var dayNames = new[] { "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz" };
+
+    Dictionary<string, string> Query(DateTime month, string? view = null, int? productionId = null, string? city = null, bool clearFilters = false)
+    {
+        var values = new Dictionary<string, string>
+        {
+            ["year"] = month.Year.ToString(),
+            ["month"] = month.Month.ToString()
+        };
+        var v = view ?? f.View;
+        if (!string.IsNullOrEmpty(v) && v != "calendar") values["view"] = v;
+        if (productionMode)
+        {
+            values["productionId"] = Model.FixedProduction!.Id.ToString();
+        }
+        else if (!clearFilters)
+        {
+            if (f.Category is not null) values["category"] = f.Category.ToString()!;
+            if ((productionId ?? f.ProductionId) is int pid) values["productionId"] = pid.ToString();
+            if ((city ?? f.City) is { Length: > 0 } c) values["city"] = c;
+        }
+        return values;
+    }
+
+    // Kaydet/sil/ekle formlarının, işlem sonrası aynı görünüme dönmesi için taşıdığı alanlar.
+    void ReturnFields()
+    {
+        <input type="hidden" name="returnTo" value="@Model.ReturnTo" />
+        <input type="hidden" name="filter.Category" value="@f.Category" />
+        <input type="hidden" name="filter.ProductionId" value="@f.ProductionId" />
+        <input type="hidden" name="filter.City" value="@f.City" />
+        <input type="hidden" name="filter.View" value="@f.View" />
+    }
+
+    var calendarQuery = Query(Model.Month, view: "calendar");
+    var listQuery = Query(Model.Month, view: "list");
+    var todayQuery = Query(new DateTime(today.Year, today.Month, 1));
+}
+
+<div class="admin-card p-3 mb-3 tour-toolbar">
+    <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-all-route-data="Query(Model.PreviousMonth)" aria-label="Önceki ay">&lsaquo;</a>
+        <h2 class="tour-month">@Model.Month.ToString("MMMM yyyy")</h2>
+        <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-all-route-data="Query(Model.NextMonth)" aria-label="Sonraki ay">&rsaquo;</a>
+        <a class="btn btn-link btn-sm" asp-action="Index" asp-all-route-data="todayQuery">Bugün</a>
+    </div>
+
+    @if (!productionMode)
+    {
+        <form method="get" asp-action="Index" class="d-flex flex-wrap align-items-center gap-2" data-tour-filter>
+            <input type="hidden" name="year" value="@Model.Month.Year" />
+            <input type="hidden" name="month" value="@Model.Month.Month" />
+            @if (f.IsListView)
+            {
+                <input type="hidden" name="view" value="list" />
+            }
+            <select name="category" class="form-select form-select-sm w-auto" aria-label="Menü">
+                <option value="">Tüm menüler</option>
+                @foreach (var category in Enum.GetValues<ProductionCategory>())
+                {
+                    <option value="@category" selected="@(f.Category == category)">@category.GetDisplayName()</option>
+                }
+            </select>
+            <select name="productionId" class="form-select form-select-sm w-auto" aria-label="Yapım">
+                <option value="">Tüm yapımlar</option>
+                @foreach (var p in Model.Productions)
+                {
+                    <option value="@p.Id" selected="@(f.ProductionId == p.Id)">@p.Title</option>
+                }
+            </select>
+            <select name="city" class="form-select form-select-sm w-auto" aria-label="Şehir">
+                <option value="">Tüm şehirler</option>
+                @foreach (var c in Model.Cities)
+                {
+                    <option value="@c" selected="@(f.City == c)">@c</option>
+                }
+            </select>
+            @if (f.IsActive)
+            {
+                <a class="btn btn-link btn-sm" asp-action="Index" asp-all-route-data="Query(Model.Month, clearFilters: true)">Filtreyi temizle</a>
+            }
+            <noscript><button type="submit" class="btn btn-sm btn-outline-primary">Uygula</button></noscript>
+        </form>
+    }
+
+    <div class="btn-group btn-group-sm" role="group" aria-label="Görünüm">
+        <a class="btn @(f.IsListView ? "btn-outline-secondary" : "btn-secondary")" asp-action="Index" asp-all-route-data="calendarQuery">Takvim</a>
+        <a class="btn @(f.IsListView ? "btn-secondary" : "btn-outline-secondary")" asp-action="Index" asp-all-route-data="listQuery">Liste</a>
+    </div>
+</div>
+
+<div class="tour-stats mb-3">
+    <div class="admin-card tour-stat">
+        <span class="tour-stat__value">@monthSessions.Count</span>
+        <span class="tour-stat__label">Seans</span>
+    </div>
+    <div class="admin-card tour-stat">
+        <span class="tour-stat__value">@monthSessions.Where(s => s.IsReady).Select(s => s.City).Distinct().Count()</span>
+        <span class="tour-stat__label">Şehir</span>
+    </div>
+    @if (!productionMode)
+    {
+        <div class="admin-card tour-stat">
+            <span class="tour-stat__value">@monthSessions.Select(s => s.ProductionId).Distinct().Count()</span>
+            <span class="tour-stat__label">Yapım</span>
+        </div>
+    }
+    <div class="admin-card tour-stat @(drafts > 0 ? "is-warning" : "")" title="Günü eklenmiş ama şehri girilmemiş seanslar sitede görünmez">
+        <span class="tour-stat__value">@drafts</span>
+        <span class="tour-stat__label">Şehir girilmedi</span>
+    </div>
+    <div class="admin-card tour-stat @(missingTicket > 0 ? "is-warning" : "")">
+        <span class="tour-stat__value">@missingTicket</span>
+        <span class="tour-stat__label">Bilet linki eksik</span>
+    </div>
+    <div class="admin-card tour-stat @(monthConflicts > 0 ? "is-danger" : "")" title="Aynı gün farklı şehirlerde seans olan günler">
+        <span class="tour-stat__value">@monthConflicts</span>
+        <span class="tour-stat__label">Şehir çakışması</span>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-9">
+        @if (!f.IsListView)
+        {
+            <div class="admin-card tour-cal-wrap">
+                <div class="tour-cal" data-tour-calendar>
+                    @foreach (var name in dayNames)
+                    {
+                        <div class="tour-cal__head">@name</div>
+                    }
+                    @for (var i = 0; i < Model.Weeks * 7; i++)
+                    {
+                        var day = Model.GridStart.AddDays(i);
+                        var inMonth = day.Month == Model.Month.Month;
+                        var classes = "tour-day"
+                            + (inMonth ? "" : " is-other-month")
+                            + (day == today ? " is-today" : "")
+                            + (i % 7 >= 5 ? " is-weekend" : "")
+                            + (conflicts.Contains(day) ? " has-conflict" : "");
+                        <div class="@classes" data-drop-date="@day.ToString("yyyy-MM-dd")" data-label="@day.ToString("d MMM")" title="Seçmek için tıklayın">
+                            <div class="tour-day__top">
+                                <span class="tour-day__num">@day.Day</span>
+                                @if (conflicts.Contains(day))
+                                {
+                                    <span class="badge bg-danger" title="Aynı gün farklı şehirlerde seans var">Çakışma</span>
+                                }
+                                <button type="button" class="tour-day__add" data-tour-add data-date="@day.ToString("yyyy-MM-dd")" title="@day.ToString("d MMMM") için tüm bilgileriyle seans ekle" aria-label="Seans ekle">+</button>
+                            </div>
+                            @foreach (var s in Model.SessionsOn(day))
+                            {
+                                var place = string.Join(" · ", new[] { s.City, s.Venue }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                                <button type="button" class="tour-chip @(s.IsReady ? "" : "is-draft")" draggable="true" style="--c: @Model.ColorFor(s.ProductionId)"
+                                        data-tour-edit
+                                        data-id="@s.Id" data-production-id="@s.ProductionId"
+                                        data-date="@s.EventDate.ToString("yyyy-MM-dd")" data-time="@s.EventDate.ToString("HH:mm")"
+                                        data-city="@s.City" data-venue="@s.Venue" data-ticket-url="@s.TicketUrl"
+                                        title="@s.Production?.Title · @s.EventDate.ToString("HH:mm")@(place.Length > 0 ? $" · {place}" : " · şehir girilmedi")">
+                                    @if (productionMode)
+                                    {
+                                        <span class="tour-chip__line">
+                                            <strong>@s.EventDate.ToString("HH:mm")</strong>
+                                            @if (s.IsReady)
+                                            {
+                                                @s.City
+                                            }
+                                            else
+                                            {
+                                                <span class="tour-chip__warn">Şehir girilmedi</span>
+                                            }
+                                        </span>
+                                        <span class="tour-chip__city">
+                                            @(s.Venue ?? (s.IsReady ? "" : "Bilgi girmek için tıklayın"))
+                                            @if (s.IsReady && string.IsNullOrEmpty(s.TicketUrl))
+                                            {
+                                                <span class="tour-chip__warn">bilet yok</span>
+                                            }
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tour-chip__line"><strong>@s.EventDate.ToString("HH:mm")</strong> @s.Production?.Title</span>
+                                        <span class="tour-chip__city">
+                                            @if (s.IsReady)
+                                            {
+                                                @s.City
+                                                @if (string.IsNullOrEmpty(s.TicketUrl))
+                                                {
+                                                    <span class="tour-chip__warn">bilet yok</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="tour-chip__warn">Şehir girilmedi</span>
+                                            }
+                                        </span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="admin-card">
+                @if (!monthSessions.Any())
+                {
+                    <div class="admin-empty">
+                        <p class="mb-3">@Model.Month.ToString("MMMM yyyy") için seans bulunmuyor.</p>
+                        <button type="button" class="btn btn-outline-primary" data-tour-add>Seans ekle</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table admin-table tour-list">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Saat</th>
+                                    @if (!productionMode)
+                                    {
+                                        <th>Yapım</th>
+                                    }
+                                    <th>Şehir</th>
+                                    <th>Salon</th>
+                                    <th>Bilet</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in monthSessions)
+                                {
+                                    <tr class="@(conflicts.Contains(s.EventDate.Date) ? "table-danger" : "")">
+                                        <td class="text-nowrap">
+                                            <div class="fw-semibold">@s.EventDate.ToString("dd MMMM")</div>
+                                            <div class="text-muted small">@s.EventDate.ToString("dddd")</div>
+                                        </td>
+                                        <td>@s.EventDate.ToString("HH:mm")</td>
+                                        @if (!productionMode)
+                                        {
+                                            <td>
+                                                <span class="tour-dot" style="--c: @Model.ColorFor(s.ProductionId)"></span>
+                                                @s.Production?.Title
+                                                <div class="text-muted small">@s.Production?.Category.GetDisplayName()</div>
+                                            </td>
+                                        }
+                                        <td>
+                                            @if (s.IsReady)
+                                            {
+                                                @s.City
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">Girilmedi</span>
+                                            }
+                                        </td>
+                                        <td>@s.Venue</td>
+                                        <td>
+                                            @if (string.IsNullOrEmpty(s.TicketUrl))
+                                            {
+                                                <span class="badge bg-warning text-dark">Eksik</span>
+                                            }
+                                            else
+                                            {
+                                                <a href="@s.TicketUrl" target="_blank" rel="noopener" class="small">@(Uri.TryCreate(s.TicketUrl, UriKind.Absolute, out var uri) ? uri.Host.Replace("www.", "") : s.TicketUrl) ↗</a>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-tour-edit
+                                                    data-id="@s.Id" data-production-id="@s.ProductionId"
+                                                    data-date="@s.EventDate.ToString("yyyy-MM-dd")" data-time="@s.EventDate.ToString("HH:mm")"
+                                                    data-city="@s.City" data-venue="@s.Venue" data-ticket-url="@s.TicketUrl">
+                                                Düzenle
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="col-xl-3">
+        @if (productionMode)
+        {
+            <div class="admin-card p-3 mb-3">
+                <h2 class="tour-side-title">Yaklaşan Seanslar</h2>
+                @if (!Model.UpcomingSessions.Any())
+                {
+                    <p class="text-muted small mb-0">Henüz seans yok. Takvimde günleri seçip ekleyin.</p>
+                }
+                else
+                {
+                    <ul class="tour-side-list">
+                        @foreach (var s in Model.UpcomingSessions)
+                        {
+                            <li>
+                                <a asp-action="Index" asp-all-route-data="Query(new DateTime(s.EventDate.Year, s.EventDate.Month, 1))">
+                                    <strong>@s.EventDate.ToString("d MMM")</strong> <span class="text-muted">@s.EventDate.ToString("ddd HH:mm")</span>
+                                </a>
+                                @if (s.IsReady)
+                                {
+                                    <span class="small text-truncate">@s.City</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Şehir yok</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+
+        <div class="admin-card p-3 mb-3">
+            <h2 class="tour-side-title">Rota · @Model.Month.ToString("MMMM")</h2>
+            @if (!route.Any())
+            {
+                <p class="text-muted small mb-0">Bu ay için şehri girilmiş durak yok.</p>
+            }
+            else
+            {
+                <ol class="tour-route">
+                    @foreach (var stop in route)
+                    {
+                        <li>
+                            <div class="d-flex justify-content-between gap-2">
+                                <strong>@stop.City</strong>
+                                <span class="text-muted small text-nowrap">
+                                    @if (stop.From.Date == stop.To.Date)
+                                    {
+                                        @stop.From.ToString("d MMM")
+                                    }
+                                    else
+                                    {
+                                        @($"{stop.From:d MMM} – {stop.To:d MMM}")
+                                    }
+                                </span>
+                            </div>
+                            <div class="small text-muted">
+                                @stop.Sessions.Count seans
+                                @if (!productionMode)
+                                {
+                                    @foreach (var group in stop.Sessions.GroupBy(s => s.ProductionId))
+                                    {
+                                        <span class="text-nowrap ms-2"><span class="tour-dot" style="--c: @Model.ColorFor(group.Key)"></span>@group.First().Production?.Title</span>
+                                    }
+                                }
+                            </div>
+                        </li>
+                    }
+                </ol>
+            }
+        </div>
+
+        <div class="admin-card p-3 mb-3">
+            <h2 class="tour-side-title">Şehirler</h2>
+            @{
+                var cityCounts = monthSessions
+                    .Where(s => s.IsReady)
+                    .GroupBy(s => s.City!)
+                    .OrderByDescending(g => g.Count())
+                    .ToList();
+            }
+            @if (!cityCounts.Any())
+            {
+                <p class="text-muted small mb-0">Bu ay şehri girilmiş seans yok.</p>
+            }
+            else
+            {
+                <ul class="tour-side-list">
+                    @foreach (var g in cityCounts)
+                    {
+                        <li>
+                            @if (productionMode)
+                            {
+                                <span>@g.Key</span>
+                            }
+                            else
+                            {
+                                <a asp-action="Index" asp-all-route-data="Query(Model.Month, city: g.Key)" class="@(f.City == g.Key ? "fw-semibold" : "")">@g.Key</a>
+                            }
+                            <span class="badge rounded-pill bg-light text-dark border">@g.Count()</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        @if (!productionMode)
+        {
+            <div class="admin-card p-3">
+                <h2 class="tour-side-title">Yapımlar</h2>
+                <ul class="tour-side-list">
+                    @foreach (var p in Model.Productions)
+                    {
+                        var count = monthSessions.Count(s => s.ProductionId == p.Id);
+                        <li>
+                            <a asp-action="Index" asp-all-route-data="Query(Model.Month, productionId: p.Id)" class="@(f.ProductionId == p.Id ? "fw-semibold" : "")">
+                                <span class="tour-dot" style="--c: @Model.ColorFor(p.Id)"></span>@p.Title
+                            </a>
+                            <span class="badge rounded-pill bg-light text-dark border">@count</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>
+
+@* Takvimde seçilen günler için alt çubuk: seçim yapılınca görünür. *@
+<form method="post" asp-area="Admin" asp-controller="Tour" asp-action="AddDays" class="tour-selection" data-tour-selection hidden>
+    <div class="tour-selection__info">
+        <strong><span data-selection-count>0</span> gün seçildi</strong>
+        <span class="text-muted small d-block text-truncate" data-selection-list></span>
+    </div>
+    @if (productionMode)
+    {
+        <input type="hidden" name="productionId" value="@Model.FixedProduction!.Id" />
+    }
+    else
+    {
+        <select name="productionId" class="form-select form-select-sm w-auto" aria-label="Yapım" required>
+            <option value="">Yapım seçin</option>
+            @foreach (var p in Model.Productions)
+            {
+                <option value="@p.Id" selected="@(f.ProductionId == p.Id)">@p.Title</option>
+            }
+        </select>
+    }
+    <label class="d-flex align-items-center gap-2 small mb-0">
+        Saat
+        <input type="time" name="time" value="20:00" class="form-control form-control-sm" required />
+    </label>
+    <button type="submit" class="btn btn-primary btn-sm">Seçili günlere ekle</button>
+    <button type="button" class="btn btn-link btn-sm text-muted" data-selection-clear>Seçimi temizle</button>
+    <div data-selection-inputs hidden></div>
+    @{ ReturnFields(); }
+</form>
+
+<div class="modal fade" id="tourModal" tabindex="-1" aria-labelledby="tourModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" asp-area="Admin" asp-controller="Tour" asp-action="Save" class="modal-content" data-tour-form>
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="tourModalTitle">Seans Ekle</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="session.Id" data-field="id" />
+                @{ ReturnFields(); }
+
+                @if (productionMode)
+                {
+                    <input type="hidden" name="session.ProductionId" data-field="productionId" data-default="@Model.FixedProduction!.Id" />
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="tourProduction">Yapım</label>
+                        <select class="form-select" id="tourProduction" name="session.ProductionId" data-field="productionId" data-default="@f.ProductionId" required>
+                            <option value="">Yapım seçin</option>
+                            @foreach (var group in Model.Productions.GroupBy(p => p.Category))
+                            {
+                                <optgroup label="@group.Key.GetDisplayName()">
+                                    @foreach (var p in group)
+                                    {
+                                        <option value="@p.Id">@p.Title</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                    </div>
+                }
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" for="tourCity">Şehir</label>
+                        <input class="form-control" id="tourCity" name="session.City" data-field="city" data-default="@f.City" list="tourCities" maxlength="100" autocomplete="off" placeholder="Örn: Ankara" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold" for="tourVenue">Salon</label>
+                        <input class="form-control" id="tourVenue" name="session.Venue" data-field="venue" list="tourVenues" maxlength="150" autocomplete="off" placeholder="Örn: Kültür Merkezi" />
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-7">
+                        <label class="form-label fw-semibold" for="tourDate">Tarih</label>
+                        <input type="date" class="form-control" id="tourDate" name="session.Date" data-field="date" required />
+                    </div>
+                    <div class="col-5">
+                        <label class="form-label fw-semibold" for="tourTime">Saat</label>
+                        <input type="time" class="form-control" id="tourTime" name="session.Time" data-field="time" data-default="20:00" required />
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label fw-semibold" for="tourTicket">Bilet Linki</label>
+                    <input type="url" class="form-control" id="tourTicket" name="session.TicketUrl" data-field="ticketUrl" maxlength="500" placeholder="https://..." />
+                </div>
+                <div class="form-text mt-2">Şehri girilmeyen seanslar sitede gösterilmez.</div>
+                <datalist id="tourCities">
+                    @foreach (var c in Model.Cities)
+                    {
+                        <option value="@c"></option>
+                    }
+                </datalist>
+                <datalist id="tourVenues">
+                    @foreach (var v in Model.Venues)
+                    {
+                        <option value="@v"></option>
+                    }
+                </datalist>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" form="tourDeleteForm" class="btn btn-outline-danger me-auto" data-tour-delete hidden>Sil</button>
+                <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<form method="post" asp-area="Admin" asp-controller="Tour" asp-action="Delete" id="tourDeleteForm" data-confirm="Bu seans silinsin mi?">
+    <input type="hidden" name="id" data-field="id" />
+    @{ ReturnFields(); }
+</form>
+
+<form method="post" asp-area="Admin" asp-controller="Tour" asp-action="Move" id="tourMoveForm" hidden></form>

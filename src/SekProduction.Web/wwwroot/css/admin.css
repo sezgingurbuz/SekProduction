@@ -218,6 +218,26 @@ body.admin {
   box-shadow: inset 0 0 0 2px #f5c2c7;
 }
 
+.tour-cal .tour-day {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tour-cal .tour-day:hover {
+  background: #f3f7ff;
+}
+
+.tour-day.is-selected,
+.tour-day.is-selected:hover {
+  background: #dbeafe;
+  box-shadow: inset 0 0 0 2px #3b82f6;
+}
+
+.tour-day.is-selected .tour-day__num {
+  background: #3b82f6;
+  color: #fff;
+}
+
 .tour-day.is-drop-target {
   background: #e7f0ff;
   box-shadow: inset 0 0 0 2px #0d6efd;
@@ -289,6 +309,12 @@ body.admin {
   background: color-mix(in srgb, var(--c) 18%, #fff);
 }
 
+.tour-chip.is-draft {
+  background: #fff;
+  border: 1px dashed #f59e0b;
+  border-left: 3px solid var(--c);
+}
+
 .tour-chip.is-dragging {
   opacity: .4;
 }
@@ -319,6 +345,33 @@ body.admin {
   background: var(--c);
   margin-right: .35rem;
   vertical-align: .05em;
+}
+
+.tour-selection {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  z-index: 1030;
+  width: min(900px, calc(100% - 2rem));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem 1rem;
+  padding: .75rem 1rem;
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  border-radius: .75rem;
+  box-shadow: 0 .75rem 2rem rgba(16, 24, 40, .18);
+}
+
+.tour-selection__info {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+body.has-tour-selection main {
+  padding-bottom: 6rem !important;
 }
 
 .tour-side-title {

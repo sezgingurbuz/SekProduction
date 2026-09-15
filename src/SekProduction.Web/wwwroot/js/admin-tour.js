@@ -70,6 +70,75 @@
         });
     }
 
+    // Gün seçimi: boş alana tıklamak günü seçer/bırakır, Shift ile aralık seçilir.
+    // Seçili günler alttaki çubuktan tek seferde eklenir.
+    var calendar = document.querySelector('[data-tour-calendar]');
+    var selectionForm = document.querySelector('[data-tour-selection]');
+    if (calendar && selectionForm) {
+        var dayCells = Array.prototype.slice.call(calendar.querySelectorAll('[data-drop-date]'));
+        var labels = {};
+        dayCells.forEach(function (cell) { labels[cell.dataset.dropDate] = cell.dataset.label; });
+        var selected = {};
+        var lastIndex = null;
+        var count = selectionForm.querySelector('[data-selection-count]');
+        var list = selectionForm.querySelector('[data-selection-list]');
+        var inputs = selectionForm.querySelector('[data-selection-inputs]');
+
+        var render = function () {
+            var dates = Object.keys(selected).sort();
+            dayCells.forEach(function (cell) {
+                cell.classList.toggle('is-selected', !!selected[cell.dataset.dropDate]);
+            });
+            selectionForm.hidden = dates.length === 0;
+            document.body.classList.toggle('has-tour-selection', dates.length > 0);
+            count.textContent = dates.length;
+            list.textContent = dates.map(function (d) { return labels[d]; }).join(', ');
+            inputs.innerHTML = '';
+            dates.forEach(function (d) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'dates';
+                input.value = d;
+                inputs.appendChild(input);
+            });
+        };
+
+        var clearSelection = function () {
+            selected = {};
+            lastIndex = null;
+            render();
+        };
+
+        dayCells.forEach(function (cell, index) {
+            cell.addEventListener('click', function (e) {
+                if (e.target.closest('button, a')) {
+                    return;
+                }
+                var date = cell.dataset.dropDate;
+                if (e.shiftKey && lastIndex !== null) {
+                    var from = Math.min(lastIndex, index);
+                    var to = Math.max(lastIndex, index);
+                    for (var i = from; i <= to; i++) {
+                        selected[dayCells[i].dataset.dropDate] = true;
+                    }
+                } else if (selected[date]) {
+                    delete selected[date];
+                } else {
+                    selected[date] = true;
+                }
+                lastIndex = index;
+                render();
+            });
+        });
+
+        selectionForm.querySelector('[data-selection-clear]').addEventListener('click', clearSelection);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modalEl.classList.contains('show')) {
+                clearSelection();
+            }
+        });
+    }
+
     // Sürükle-bırak: seansı başka bir güne taşır, saati korunur.
     var token = document.querySelector('#tourMoveForm input[name="__RequestVerificationToken"]');
     var moveUrl = document.getElementById('tourMoveForm').getAttribute('action');

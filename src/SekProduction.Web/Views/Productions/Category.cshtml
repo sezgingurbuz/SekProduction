@@ -27,7 +27,7 @@ else
         @foreach (var production in Model)
         {
             var nextDate = production.EventSchedules
-                .Where(e => e.EventDate >= today)
+                .Where(e => e.IsReady && e.EventDate >= today)
                 .OrderBy(e => e.EventDate)
                 .FirstOrDefault();
             <div class="col">

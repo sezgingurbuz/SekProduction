@@ -4,7 +4,7 @@
     ViewData["BodyClass"] = "play-page";
 
     var today = DateTime.Now.Date;
-    var sessions = Model.EventSchedules.Where(e => e.EventDate >= today).OrderBy(e => e.EventDate).ToList();
+    var sessions = Model.EventSchedules.Where(e => e.IsReady && e.EventDate >= today).OrderBy(e => e.EventDate).ToList();
     var nextTicket = sessions.FirstOrDefault(s => !string.IsNullOrEmpty(s.TicketUrl));
     var cast = Model.CastMembers.OrderBy(c => c.DisplayOrder).ThenBy(c => c.Id).ToList();
     var photos = Model.Photos.OrderBy(p => p.DisplayOrder).ThenBy(p => p.Id).ToList();

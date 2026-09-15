@@ -1,42 +1,38 @@
-@model IEnumerable<SekProduction.Web.Models.EventSchedule>
+@model TourCalendarViewModel
 @{
-    var production = ViewData["Production"] as SekProduction.Web.Models.Production;
-    ViewData["Title"] = "Etkinlik Günleri";
+    var production = Model.FixedProduction!;
+    ViewData["Title"] = $"Etkinlik Günleri · {production.Title}";
+    ViewData["ContainerClass"] = "container-fluid admin-wide";
 }
 
-<h1>Etkinlik Günleri &mdash; @production?.Title</h1>
-
-<p>
-    <a asp-action="Create" asp-route-productionId="@production?.Id">Yeni Etkinlik Tarihi Ekle</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.EventDate)</th>
-            <th>@Html.DisplayNameFor(model => model.Venue)</th>
-            <th>@Html.DisplayNameFor(model => model.City)</th>
-            <th>@Html.DisplayNameFor(model => model.TicketUrl)</th>
-            <th>@Html.DisplayNameFor(model => model.DisplayOrder)</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>@item.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
-            <td>@Html.DisplayFor(modelItem => item.Venue)</td>
-            <td>@Html.DisplayFor(modelItem => item.City)</td>
-            <td>@Html.DisplayFor(modelItem => item.TicketUrl)</td>
-            <td>@Html.DisplayFor(modelItem => item.DisplayOrder)</td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
-
-<div>
-    <a asp-area="Admin" asp-controller="Productions" asp-action="Index">Yapımlara Dön</a>
+<div class="admin-page-header">
+    <div class="d-flex align-items-center gap-3">
+        @if (!string.IsNullOrEmpty(production.CoverImageUrl))
+        {
+            <img src="@production.CoverImageUrl" alt="@production.Title" class="admin-thumb" />
+        }
+        <div>
+            <a asp-area="Admin" asp-controller="Productions" asp-action="Index" asp-route-category="@production.Category" class="text-decoration-none small">&larr; Yapımlar</a>
+            <h1>
+                <span class="tour-dot" style="--c: @Model.ColorFor(production.Id)"></span>@production.Title
+                <span class="badge rounded-pill bg-light text-dark border align-middle fs-6 fw-normal">@production.Category.GetDisplayName()</span>
+            </h1>
+            <div class="text-muted small">
+                Etkinlik günleri: takvimde günlere tıklayarak seçin (Shift ile aralık seçebilirsiniz), alttaki çubuktan ekleyin.
+                Ardından şehir, salon ve saat için seansa tıklayın.
+            </div>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-area="Admin" asp-controller="Productions" asp-action="Edit" asp-route-id="@production.Id" class="btn btn-outline-dark">Yapımı Düzenle</a>
+        <a asp-area="Admin" asp-controller="CastMembers" asp-action="Index" asp-route-productionId="@production.Id" class="btn btn-outline-dark">Oyuncular</a>
+        <a asp-area="Admin" asp-controller="ProductionPhotos" asp-action="Index" asp-route-productionId="@production.Id" class="btn btn-outline-dark">Galeri</a>
+        <a asp-area="Admin" asp-controller="Tour" asp-action="Index" class="btn btn-outline-secondary">Turne Takvimi</a>
+    </div>
 </div>
+
+<partial name="_TourBoard" model="Model" />
+
+@section Scripts {
+    <script src="~/js/admin-tour.js" asp-append-version="true"></script>
+}

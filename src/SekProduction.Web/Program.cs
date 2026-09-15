@@ -15,6 +15,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<SekProduction.Web.Services.ImageStorage>();
+builder.Services.AddScoped<SekProduction.Web.Services.TourCalendarService>();
 
 var app = builder.Build();
 

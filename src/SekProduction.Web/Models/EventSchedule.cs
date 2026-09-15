@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SekProduction.Web.Models;
 
@@ -30,4 +31,8 @@ public class EventSchedule
 
     [Display(Name = "Sıra")]
     public int DisplayOrder { get; set; }
+
+    // Takvimden sadece günü seçilip eklenen seanslar şehri girilene kadar taslaktır ve sitede gösterilmez.
+    [NotMapped]
+    public bool IsReady => !string.IsNullOrWhiteSpace(City);
 }
