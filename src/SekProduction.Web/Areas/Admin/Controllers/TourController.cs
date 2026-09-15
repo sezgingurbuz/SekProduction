@@ -16,6 +16,7 @@ namespace SekProduction.Web.Areas.Admin.Controllers
     public class TourController : Controller
     {
         private const int MaxDaysPerRequest = 100;
+        private const int MaxSessionsPerDelete = 500;
 
         private readonly ApplicationDbContext _context;
         private readonly TourCalendarService _calendar;
@@ -156,6 +157,35 @@ namespace SekProduction.Web.Areas.Admin.Controllers
 
             TempData["StatusMessage"] = $"{entity.Production?.Title} · {entity.EventDate:dd MMMM yyyy, HH:mm} · {entity.City ?? "şehir girilmedi"} silindi.";
             return RedirectToCalendar(entity.EventDate, filter, returnTo, entity.ProductionId);
+        }
+
+        // POST: Admin/Tour/DeleteMany — takvimde seçilen günlerde görünen seansları toplu siler
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMany(List<int> ids, TourFilter filter, string? returnTo)
+        {
+            var idList = ids.Distinct().Take(MaxSessionsPerDelete).ToList();
+            var query = _context.EventSchedules.Where(e => idList.Contains(e.Id));
+
+            // Yapım sayfasından gelen istek yalnızca o yapımın seanslarını silebilir.
+            if (returnTo == TourReturn.Production)
+            {
+                query = query.Where(e => e.ProductionId == filter.ProductionId);
+            }
+
+            var sessions = await query.OrderBy(e => e.EventDate).ToListAsync();
+            if (sessions.Count == 0)
+            {
+                TempData["StatusError"] = "Seçili günlerde silinecek seans bulunamadı.";
+                return RedirectToCalendar(DateTime.Today, filter, returnTo, filter.ProductionId);
+            }
+
+            _context.EventSchedules.RemoveRange(sessions);
+            await _context.SaveChangesAsync();
+
+            var days = sessions.Select(s => s.EventDate.Date).Distinct().Select(d => d.ToString("d MMM"));
+            TempData["StatusMessage"] = $"{sessions.Count} seans silindi: {string.Join(", ", days)}.";
+            return RedirectToCalendar(sessions[0].EventDate, filter, returnTo, filter.ProductionId);
         }
 
         private IActionResult RedirectToCalendar(DateTime date, TourFilter filter, string? returnTo, int? productionId)

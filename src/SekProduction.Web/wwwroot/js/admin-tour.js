@@ -83,12 +83,25 @@
         var count = selectionForm.querySelector('[data-selection-count]');
         var list = selectionForm.querySelector('[data-selection-list]');
         var inputs = selectionForm.querySelector('[data-selection-inputs]');
+        var bulkDeleteButton = selectionForm.querySelector('[data-selection-delete]');
+        var bulkDeleteCount = selectionForm.querySelector('[data-selection-session-count]');
+        var bulkDeleteForm = document.getElementById('tourBulkDeleteForm');
+        var selectedSessionIds = [];
 
         var render = function () {
             var dates = Object.keys(selected).sort();
+            selectedSessionIds = [];
             dayCells.forEach(function (cell) {
-                cell.classList.toggle('is-selected', !!selected[cell.dataset.dropDate]);
+                var isSelected = !!selected[cell.dataset.dropDate];
+                cell.classList.toggle('is-selected', isSelected);
+                if (isSelected) {
+                    cell.querySelectorAll('[data-tour-edit]').forEach(function (chip) {
+                        selectedSessionIds.push(chip.dataset.id);
+                    });
+                }
             });
+            bulkDeleteButton.hidden = selectedSessionIds.length === 0;
+            bulkDeleteCount.textContent = selectedSessionIds.length;
             selectionForm.hidden = dates.length === 0;
             document.body.classList.toggle('has-tour-selection', dates.length > 0);
             count.textContent = dates.length;
@@ -132,6 +145,23 @@
         });
 
         selectionForm.querySelector('[data-selection-clear]').addEventListener('click', clearSelection);
+
+        bulkDeleteButton.addEventListener('click', function () {
+            var dayCount = Object.keys(selected).length;
+            if (!selectedSessionIds.length || !confirm('Seçili ' + dayCount + ' gündeki ' + selectedSessionIds.length + ' seans silinecek. Bu işlem geri alınamaz. Devam edilsin mi?')) {
+                return;
+            }
+            var container = bulkDeleteForm.querySelector('[data-bulk-delete-inputs]');
+            container.innerHTML = '';
+            selectedSessionIds.forEach(function (id) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids';
+                input.value = id;
+                container.appendChild(input);
+            });
+            bulkDeleteForm.submit();
+        });
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && !modalEl.classList.contains('show')) {
                 clearSelection();

@@ -455,8 +455,17 @@
         <input type="time" name="time" value="20:00" class="form-control form-control-sm" required />
     </label>
     <button type="submit" class="btn btn-primary btn-sm">Seçili günlere ekle</button>
+    <button type="button" class="btn btn-outline-danger btn-sm" data-selection-delete hidden>
+        Seçili günlerdeki <span data-selection-session-count>0</span> seansı sil
+    </button>
     <button type="button" class="btn btn-link btn-sm text-muted" data-selection-clear>Seçimi temizle</button>
     <div data-selection-inputs hidden></div>
+    @{ ReturnFields(); }
+</form>
+
+@* Seçili günlerde takvimde görünen seansların toplu silinmesi; kimlikler JS ile doldurulur. *@
+<form method="post" asp-area="Admin" asp-controller="Tour" asp-action="DeleteMany" id="tourBulkDeleteForm" hidden>
+    <div data-bulk-delete-inputs></div>
     @{ ReturnFields(); }
 </form>
 
