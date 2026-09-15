@@ -154,6 +154,7 @@
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li><a class="dropdown-item" asp-area="Admin" asp-controller="EventSchedules" asp-action="Index" asp-route-productionId="@item.Id">Etkinlik Günleri (@item.EventSchedules.Count)</a></li>
+                                        <li><a class="dropdown-item" asp-area="Admin" asp-controller="Tour" asp-action="Index" asp-route-productionId="@item.Id">Turne Takviminde Gör</a></li>
                                         <li><a class="dropdown-item" asp-area="Admin" asp-controller="CastMembers" asp-action="Index" asp-route-productionId="@item.Id">Oyuncular (@item.CastMembers.Count)</a></li>
                                         <li><a class="dropdown-item" asp-area="Admin" asp-controller="ProductionPhotos" asp-action="Index" asp-route-productionId="@item.Id">Galeri (@item.Photos.Count)</a></li>
                                         <li><hr class="dropdown-divider" /></li>

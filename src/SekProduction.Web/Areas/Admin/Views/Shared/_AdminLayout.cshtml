@@ -19,6 +19,7 @@
                 <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item"><a class="nav-link text-light" asp-area="Admin" asp-controller="Productions" asp-action="Index">Yapımlar</a></li>
+                        <li class="nav-item"><a class="nav-link text-light" asp-area="Admin" asp-controller="Tour" asp-action="Index">Turne Takvimi</a></li>
                         <li class="nav-item"><a class="nav-link text-light" asp-area="Admin" asp-controller="TeamMembers" asp-action="Index">Ekip</a></li>
                         <li class="nav-item"><a class="nav-link text-light" asp-area="Admin" asp-controller="NewsPosts" asp-action="Index">Haberler</a></li>
                         <li class="nav-item"><a class="nav-link text-light" asp-area="Admin" asp-controller="ClientReferences" asp-action="Index">Referanslar</a></li>
@@ -30,10 +31,14 @@
             </div>
         </nav>
     </header>
-    <div class="container mt-4">
+    <div class="@(ViewData["ContainerClass"] ?? "container") mt-4">
         @if (TempData["StatusMessage"] is string statusMessage)
         {
             <div class="alert alert-info">@statusMessage</div>
+        }
+        @if (TempData["StatusError"] is string statusError)
+        {
+            <div class="alert alert-danger">@statusError</div>
         }
         <main role="main" class="pb-3">
             @RenderBody()
