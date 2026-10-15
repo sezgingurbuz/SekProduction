@@ -13,7 +13,10 @@
             Turne şehirlerindeki oteller ve gecelik fiyatlar. Çalışanlar etkinlik sayfasında şehrin otellerini görür.
         </div>
     </div>
-    <a asp-action="Create" asp-route-city="@selectedCity" class="btn btn-primary">+ Yeni Otel</a>
+    <div class="d-flex gap-2">
+        <a asp-area="" asp-controller="Hotels" asp-action="Index" class="btn btn-outline-dark">Haritalı Otel Sayfası</a>
+        <a asp-action="Create" asp-route-city="@selectedCity" class="btn btn-primary">+ Yeni Otel</a>
+    </div>
 </div>
 
 @if (missing.Any())

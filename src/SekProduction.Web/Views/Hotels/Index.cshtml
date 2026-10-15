@@ -1,94 +1,160 @@
 @model HotelListViewModel
+@using SekProduction.Web.Services
 @{
     ViewData["Title"] = "Oteller";
+    ViewData["ContainerClass"] = "container-xxl";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/city-map.css" asp-append-version="true" />
 }
 
 <div class="page-header">
     <div>
         <h1>Oteller</h1>
-        <div class="text-muted small">Etkinlik yapılan şehirlerde kalınabilecek oteller ve gecelik fiyatlar.</div>
+        <div class="text-muted small">
+            Haritadan ili tıklayarak veya arama kutusuna şehir yazarak o şehre girilmiş otelleri ve gecelik fiyatları görün.
+        </div>
     </div>
-</div>
-
-<form asp-action="Index" method="get" class="d-flex flex-wrap gap-2 align-items-end mb-4">
-    <div>
-        <label class="form-label small mb-1" for="city">Şehir</label>
-        <select id="city" name="city" class="form-select form-select-sm">
-            <option value="">Tümü</option>
-            @foreach (var city in Model.Cities)
-            {
-                <option value="@city" selected="@(Model.SelectedCity == city)">@city</option>
-            }
-        </select>
-    </div>
-    <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
-    @if (!string.IsNullOrEmpty(Model.SelectedCity))
+    @if (User.IsInRole(AppRoles.Admin))
     {
-        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Temizle</a>
+        <a asp-area="Admin" asp-controller="Hotels" asp-action="Index" class="btn btn-warning">Otelleri Yönet</a>
     }
-</form>
+</div>
 
 @if (Model.TotalCount == 0)
 {
-    <div class="empty-state">Bu şehir için kayıtlı otel yok. Yöneticinize bildirebilirsiniz.</div>
+    <div class="empty-state">
+        Henüz otel kaydı yok.
+        @if (User.IsInRole(AppRoles.Admin))
+        {
+            <a asp-area="Admin" asp-controller="Hotels" asp-action="Create">İlk oteli ekleyin.</a>
+        }
+        else
+        {
+            <span>Yöneticinize bildirebilirsiniz.</span>
+        }
+    </div>
 }
 else
 {
-    foreach (var group in Model.CityGroups)
-    {
-        <h2 class="h5 mt-4">@group.Key <span class="text-muted fs-6 fw-normal">· @group.Count() otel</span></h2>
-        <div class="row g-3">
-            @foreach (var hotel in group.OrderByDescending(h => h.IsPreferred).ThenBy(h => h.Name, SekProduction.Web.Services.CityDirectory.TurkishComparer))
-            {
-                <div class="col-md-6 col-xl-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h3 class="h6 mb-1">
-                                @hotel.Name
-                                @if (hotel.Stars is not null)
-                                {
-                                    <span class="text-warning">@hotel.StarsText</span>
-                                }
-                            </h3>
-                            @if (hotel.IsPreferred)
-                            {
-                                <span class="badge bg-success mb-2">Anlaşmalı otel</span>
-                            }
-                            <ul class="list-unstyled small mb-2">
-                                <li><strong>Tek kişilik:</strong> @(hotel.SingleRoomPrice is null ? "—" : hotel.SingleRoomPrice.Value.ToString("C2"))</li>
-                                <li><strong>Çift kişilik:</strong> @(hotel.DoubleRoomPrice is null ? "—" : hotel.DoubleRoomPrice.Value.ToString("C2"))</li>
-                                <li class="text-muted">Kahvaltı @(hotel.BreakfastIncluded ? "dahil" : "hariç")</li>
-                            </ul>
-                            @if (!string.IsNullOrWhiteSpace(hotel.Address))
-                            {
-                                <div class="small text-muted">@hotel.Address</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(hotel.Phone))
-                            {
-                                <div class="small"><a href="tel:@hotel.Phone">@hotel.Phone</a></div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(hotel.ContactName))
-                            {
-                                <div class="small text-muted">Yetkili: @hotel.ContactName</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(hotel.WebsiteUrl))
-                            {
-                                <div class="small"><a href="@hotel.WebsiteUrl" target="_blank" rel="noopener">Web sitesi ↗</a></div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(hotel.Notes))
-                            {
-                                <div class="small mt-2" style="white-space: pre-line">@hotel.Notes</div>
-                            }
+    <div data-hotel-map data-src="@Url.Content("~/img/turkiye.svg")" data-selected-city="@Model.SelectedCity">
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="city-map" data-map-canvas>
+                            <div class="text-muted small p-4 text-center">Harita yükleniyor…</div>
                         </div>
-                        @if (hotel.PriceUpdatedAt is not null)
-                        {
-                            <div class="card-footer bg-white text-muted small">
-                                Fiyat güncellenme: @hotel.PriceUpdatedAt.Value.ToLocalTime().ToString("d MMMM yyyy")
-                            </div>
-                        }
+                        <div class="city-map-legend">
+                            <span><i class="city-map-swatch" data-level="1"></i>1 otel</span>
+                            <span><i class="city-map-swatch" data-level="2"></i>2–3 otel</span>
+                            <span><i class="city-map-swatch" data-level="3"></i>4+ otel</span>
+                            <span>Oteli olan iller renkli; tıklayınca o ilin otelleri listelenir.</span>
+                        </div>
                     </div>
                 </div>
-            }
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <label class="form-label small mb-1" for="city-search">Şehir ara</label>
+                        <input id="city-search" class="form-control form-control-sm mb-2" type="search"
+                               placeholder="Örn. Ankara" autocomplete="off" data-city-search />
+                        <div class="city-picker" data-city-picker>
+                            @foreach (var group in Model.CityGroups)
+                            {
+                                var eventCount = Model.EventCountFor(group.Key);
+                                <button type="button" class="city-picker__item" data-city-item="@group.Key">
+                                    <span>@group.Key</span>
+                                    <span class="city-picker__meta">
+                                        @group.Count() otel@(eventCount > 0 ? $" · {eventCount} etkinlik" : "")
+                                    </span>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    }
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <h2 class="h5 mb-0" data-city-heading>Bütün şehirler</h2>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-city-reset hidden>Seçimi temizle</button>
+        </div>
+
+        <div class="empty-state" data-city-empty hidden>Bu şehir için kayıtlı otel yok.</div>
+
+        @foreach (var group in Model.CityGroups)
+        {
+            <div data-hotel-city="@group.Key" data-hotel-count="@group.Count()">
+                <h3 class="h6 text-uppercase text-muted mt-4">
+                    @group.Key
+                    <span class="fw-normal text-lowercase">· @group.Count() otel</span>
+                    @if (Model.EventCountFor(group.Key) > 0)
+                    {
+                        <span class="badge rounded-pill bg-light text-dark border fw-normal">@Model.EventCountFor(group.Key) yaklaşan etkinlik</span>
+                    }
+                </h3>
+                <div class="row g-3">
+                    @foreach (var hotel in group.OrderByDescending(h => h.IsPreferred).ThenBy(h => h.Name, CityDirectory.TurkishComparer))
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h4 class="h6 mb-1">
+                                        @hotel.Name
+                                        @if (hotel.Stars is not null)
+                                        {
+                                            <span class="text-warning">@hotel.StarsText</span>
+                                        }
+                                    </h4>
+                                    @if (hotel.IsPreferred)
+                                    {
+                                        <span class="badge bg-success mb-2">Anlaşmalı otel</span>
+                                    }
+                                    <ul class="list-unstyled small mb-2">
+                                        <li><strong>Tek kişilik:</strong> @(hotel.SingleRoomPrice is null ? "—" : hotel.SingleRoomPrice.Value.ToString("C2"))</li>
+                                        <li><strong>Çift kişilik:</strong> @(hotel.DoubleRoomPrice is null ? "—" : hotel.DoubleRoomPrice.Value.ToString("C2"))</li>
+                                        <li class="text-muted">Kahvaltı @(hotel.BreakfastIncluded ? "dahil" : "hariç")</li>
+                                    </ul>
+                                    @if (!string.IsNullOrWhiteSpace(hotel.Address))
+                                    {
+                                        <div class="small text-muted">@hotel.Address</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(hotel.Phone))
+                                    {
+                                        <div class="small"><a href="tel:@hotel.Phone">@hotel.Phone</a></div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(hotel.ContactName))
+                                    {
+                                        <div class="small text-muted">Yetkili: @hotel.ContactName</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(hotel.WebsiteUrl))
+                                    {
+                                        <div class="small"><a href="@hotel.WebsiteUrl" target="_blank" rel="noopener">Web sitesi ↗</a></div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(hotel.Notes))
+                                    {
+                                        <div class="small mt-2" style="white-space: pre-line">@hotel.Notes</div>
+                                    }
+                                </div>
+                                @if (hotel.PriceUpdatedAt is not null)
+                                {
+                                    <div class="card-footer bg-white text-muted small">
+                                        Fiyat güncellenme: @hotel.PriceUpdatedAt.Value.ToLocalTime().ToString("d MMMM yyyy")
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/hotel-map.js" asp-append-version="true"></script>
 }

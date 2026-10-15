@@ -1,0 +1,125 @@
+/* Oteller sayfasındaki Türkiye haritası ve şehir seçimi */
+.city-map {
+    --map-c: #0d6efd;
+    position: relative;
+    aspect-ratio: 1007.478 / 527.323;
+    max-height: 420px;
+    margin-inline: auto;
+}
+
+.city-map svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+    margin: 0 auto;
+}
+
+/* İl olmayan parçalar soluk kalır */
+.city-map svg path {
+    fill: #f5f6f7;
+    stroke: #fff;
+    stroke-width: .8;
+}
+
+.city-map g[data-plakakodu] path {
+    fill: #e9ecef;
+    stroke: #fff;
+    stroke-width: .8;
+    transition: fill .15s, filter .15s;
+}
+
+.city-map g[data-level="1"] path {
+    fill: color-mix(in srgb, var(--map-c) 35%, #fff);
+}
+
+.city-map g[data-level="2"] path {
+    fill: color-mix(in srgb, var(--map-c) 65%, #fff);
+}
+
+.city-map g[data-level="3"] path {
+    fill: var(--map-c);
+}
+
+.city-map g[data-level]:not([data-level="0"]) {
+    cursor: pointer;
+}
+
+.city-map g[data-level]:not([data-level="0"]):hover path,
+.city-map g.is-selected path {
+    filter: brightness(.82);
+}
+
+.city-map g.is-selected path {
+    stroke: #212529;
+    stroke-width: 1.4;
+}
+
+.city-map g:focus {
+    outline: none;
+}
+
+.city-map g:focus-visible path {
+    stroke: #212529;
+    stroke-width: 1.5;
+}
+
+.city-map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem 1rem;
+    margin-top: .5rem;
+    font-size: .8rem;
+    color: #6c757d;
+}
+
+.city-map-swatch {
+    display: inline-block;
+    width: .9rem;
+    height: .9rem;
+    border-radius: .2rem;
+    margin-right: .35rem;
+    vertical-align: -.1em;
+    background: #e9ecef;
+}
+
+.city-map-swatch[data-level="1"] { background: color-mix(in srgb, #0d6efd 35%, #fff); }
+.city-map-swatch[data-level="2"] { background: color-mix(in srgb, #0d6efd 65%, #fff); }
+.city-map-swatch[data-level="3"] { background: #0d6efd; }
+
+/* Şehir listesi */
+.city-picker {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.city-picker__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: .5rem;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid #e9ecef;
+    background: none;
+    padding: .45rem .25rem;
+    font-size: .9rem;
+}
+
+.city-picker__item:hover {
+    background: #f1f3f5;
+}
+
+.city-picker__item.is-selected {
+    background: #e7f1ff;
+    font-weight: 600;
+}
+
+.city-picker__meta {
+    color: #6c757d;
+    font-size: .78rem;
+    font-weight: 400;
+    white-space: nowrap;
+}
