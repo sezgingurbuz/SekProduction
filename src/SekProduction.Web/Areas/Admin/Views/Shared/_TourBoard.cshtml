@@ -8,8 +8,8 @@
     var f = Model.Filter;
     var productionMode = Model.IsProductionMode;
     var monthSessions = Model.MonthSessions;
-    var conflicts = Model.ConflictDays;
-    var monthConflicts = conflicts.Count(d => d.Month == Model.Month.Month && d.Year == Model.Month.Year);
+    var conflicts = Model.ConflictsByDay;
+    var monthConflicts = conflicts.Keys.Count(d => d.Month == Model.Month.Month && d.Year == Model.Month.Year);
     var route = Model.Route;
     var missingTicket = monthSessions.Count(s => s.IsReady && string.IsNullOrEmpty(s.TicketUrl));
     var drafts = monthSessions.Count(s => !s.IsReady);
@@ -128,9 +128,9 @@
         <span class="tour-stat__value">@missingTicket</span>
         <span class="tour-stat__label">Bilet linki eksik</span>
     </div>
-    <div class="admin-card tour-stat @(monthConflicts > 0 ? "is-danger" : "")" title="Aynı gün farklı şehirlerde seans olan günler">
+    <div class="admin-card tour-stat @(monthConflicts > 0 ? "is-danger" : "")" title="Aynı yapımın aynı gün iki şehirde ya da aynı saatte olması, veya aynı salonun aynı saatte iki kez kullanılması">
         <span class="tour-stat__value">@monthConflicts</span>
-        <span class="tour-stat__label">Şehir çakışması</span>
+        <span class="tour-stat__label">Çakışma</span>
     </div>
 </div>
 
@@ -206,13 +206,13 @@
                             + (inMonth ? "" : " is-other-month")
                             + (day == today ? " is-today" : "")
                             + (i % 7 >= 5 ? " is-weekend" : "")
-                            + (conflicts.Contains(day) ? " has-conflict" : "");
+                            + (conflicts.ContainsKey(day) ? " has-conflict" : "");
                         <div class="@classes" data-drop-date="@day.ToString("yyyy-MM-dd")" data-label="@day.ToString("d MMM")" data-full-label="@day.ToString("d MMMM ddd")" title="Seçmek için tıklayın">
                             <div class="tour-day__top">
                                 <span class="tour-day__num">@day.Day</span>
-                                @if (conflicts.Contains(day))
+                                @if (conflicts.TryGetValue(day, out var dayConflicts))
                                 {
-                                    <span class="badge bg-danger" title="Aynı gün farklı şehirlerde seans var">Çakışma</span>
+                                    <span class="badge bg-danger" title="@string.Join(" · ", dayConflicts)">Çakışma</span>
                                 }
                                 <button type="button" class="tour-day__add" data-tour-add data-date="@day.ToString("yyyy-MM-dd")" title="@day.ToString("d MMMM") için tüm bilgileriyle seans ekle" aria-label="Seans ekle">+</button>
                             </div>
@@ -302,7 +302,7 @@
                             <tbody>
                                 @foreach (var s in monthSessions)
                                 {
-                                    <tr class="@(conflicts.Contains(s.EventDate.Date) ? "table-danger" : "")">
+                                    <tr class="@(conflicts.ContainsKey(s.EventDate.Date) ? "table-danger" : "")" title="@(conflicts.TryGetValue(s.EventDate.Date, out var rowConflicts) ? string.Join(" · ", rowConflicts) : null)">
                                         <td class="text-nowrap">
                                             <div class="fw-semibold">@s.EventDate.ToString("dd MMMM")</div>
                                             <div class="text-muted small">@s.EventDate.ToString("dddd")</div>

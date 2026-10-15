@@ -4,6 +4,7 @@
     ViewData["ContainerClass"] = "container-xxl";
     var dayNames = new[] { "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar" };
     var today = DateTime.Today;
+    var conflicts = Model.ConflictsByDay;
 }
 
 <div class="page-header">
@@ -78,9 +79,9 @@
                         var sessions = Model.SessionsOn(day).ToList();
                         <td class="@(isOutside ? "is-outside" : "") @(day == today ? "is-today" : "")">
                             <span class="calendar-day__number">@day.Day</span>
-                            @if (Model.ConflictDays.Contains(day.Date))
+                            @if (conflicts.TryGetValue(day.Date, out var dayConflicts))
                             {
-                                <span class="calendar-conflict" title="Aynı gün birden fazla şehirde etkinlik var">⚠ farklı şehirler</span>
+                                <span class="calendar-conflict" title="@string.Join(" · ", dayConflicts)">⚠ çakışma</span>
                             }
                             @foreach (var session in sessions)
                             {

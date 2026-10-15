@@ -56,6 +56,8 @@ public record TourStop(string City, DateTime From, DateTime To, List<EventSchedu
 
 public class TourCalendarViewModel
 {
+    private static readonly StringComparer TurkishComparer = StringComparer.Create(new System.Globalization.CultureInfo("tr-TR"), true);
+
     public required DateTime Month { get; init; }
     public required DateTime GridStart { get; init; }
     public required int Weeks { get; init; }
@@ -87,13 +89,70 @@ public class TourCalendarViewModel
 
     public string ColorFor(int productionId) => ProductionColors.GetValueOrDefault(productionId, "#6c757d");
 
-    // Aynı gün farklı şehirlerde seans varsa ekip iki yerde birden olamaz; takvimde uyarı gösterilir.
-    public HashSet<DateTime> ConflictDays => Sessions
-        .Where(s => !string.IsNullOrWhiteSpace(s.City))
-        .GroupBy(s => s.EventDate.Date)
-        .Where(g => g.Select(s => s.City!.Trim().ToLower(new System.Globalization.CultureInfo("tr-TR"))).Distinct().Count() > 1)
-        .Select(g => g.Key)
-        .ToHashSet();
+    // Çakışma, fiziksel olarak mümkün olmayan durumdur. Kurallar:
+    //  1) Aynı yapım aynı gün birden fazla şehirde olamaz (ekip iki yerde birden olamaz).
+    //  2) Aynı yapımın aynı gün aynı saatte iki seansı olamaz.
+    //  3) Aynı salonda aynı gün aynı saatte iki seans olamaz.
+    // Farklı yapımların aynı gün farklı şehirlerde oynaması normaldir, çakışma sayılmaz.
+    public Dictionary<DateTime, List<string>> ConflictsByDay
+    {
+        get
+        {
+            var result = new Dictionary<DateTime, List<string>>();
+
+            void Add(DateTime day, string reason)
+            {
+                if (!result.TryGetValue(day, out var reasons))
+                {
+                    result[day] = reasons = new List<string>();
+                }
+                if (!reasons.Contains(reason))
+                {
+                    reasons.Add(reason);
+                }
+            }
+
+            foreach (var day in Sessions.GroupBy(s => s.EventDate.Date))
+            {
+                foreach (var production in day.GroupBy(s => s.ProductionId))
+                {
+                    var title = production.First().Production?.Title ?? "Bu yapım";
+
+                    var cities = production
+                        .Where(s => !string.IsNullOrWhiteSpace(s.City))
+                        .Select(s => s.City!.Trim())
+                        .Distinct(TurkishComparer)
+                        .ToList();
+                    if (cities.Count > 1)
+                    {
+                        Add(day.Key, $"{title} aynı gün {cities.Count} şehirde: {string.Join(", ", cities)}");
+                    }
+
+                    foreach (var slot in production.GroupBy(s => s.EventDate.TimeOfDay).Where(g => g.Count() > 1))
+                    {
+                        Add(day.Key, $"{title} saat {slot.Key:hh\\:mm} için {slot.Count()} kez girilmiş");
+                    }
+                }
+
+                foreach (var slot in day
+                    .Where(s => !string.IsNullOrWhiteSpace(s.Venue))
+                    .GroupBy(s => (Venue: Normalize(s.Venue), City: Normalize(s.City), s.EventDate.TimeOfDay))
+                    .Where(g => g.Count() > 1))
+                {
+                    var sample = slot.First();
+                    var place = string.IsNullOrWhiteSpace(sample.City) ? sample.Venue!.Trim() : $"{sample.Venue!.Trim()} ({sample.City!.Trim()})";
+                    Add(day.Key, $"{place} salonunda saat {sample.EventDate:HH\\:mm} için {slot.Count()} seans var");
+                }
+            }
+
+            return result;
+        }
+    }
+
+    public HashSet<DateTime> ConflictDays => ConflictsByDay.Keys.ToHashSet();
+
+    private static string Normalize(string? value) =>
+        (value ?? string.Empty).Trim().ToLower(new System.Globalization.CultureInfo("tr-TR"));
 
     // Ay içindeki seansları art arda aynı şehirde kalınan duraklara böler: Ankara → İstanbul → Ankara ...
     public List<TourStop> Route
