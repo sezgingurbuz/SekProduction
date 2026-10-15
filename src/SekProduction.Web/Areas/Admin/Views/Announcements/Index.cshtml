@@ -1,0 +1,65 @@
+@model List<Announcement>
+@{
+    ViewData["Title"] = "Duyurular";
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1>Duyurular</h1>
+        <div class="text-muted small">Ekibe gönderilen duyurular ve kimlerin okuduğu.</div>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Duyuru</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz duyuru gönderilmedi.</p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Başlık</th>
+                <th>Gönderen</th>
+                <th>Alıcı</th>
+                <th>Okundu</th>
+                <th>Tarih</th>
+                <th class="text-end"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var announcement in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@announcement.Id" class="fw-semibold text-decoration-none">@announcement.Title</a>
+                        @if (announcement.IsPinned)
+                        {
+                            <span class="badge bg-danger ms-1">Önemli</span>
+                        }
+                        <div class="text-muted small">@announcement.Preview</div>
+                        @if (announcement.EventSchedule is not null)
+                        {
+                            <div class="text-muted small">
+                                İlgili etkinlik: @announcement.EventSchedule.Production?.Title ·
+                                @announcement.EventSchedule.EventDate.ToString("d MMM yyyy") · @announcement.EventSchedule.City
+                            </div>
+                        }
+                    </td>
+                    <td class="text-muted">@announcement.AuthorName</td>
+                    <td>@(announcement.AudienceAll ? "Bütün ekip" : "Seçili kişiler")</td>
+                    <td>@announcement.ReadCount / @announcement.Recipients.Count</td>
+                    <td class="text-muted small">@announcement.CreatedAt.ToLocalTime().ToString("d MMM yyyy HH:mm")</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@announcement.Id" class="btn btn-sm btn-outline-dark">Düzenle</a>
+                        <form asp-action="Delete" asp-route-id="@announcement.Id" method="post" class="d-inline"
+                              data-confirm="Bu duyuru silinsin mi?">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

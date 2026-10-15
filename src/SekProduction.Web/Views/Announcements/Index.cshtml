@@ -1,0 +1,61 @@
+@model List<InboxItemViewModel>
+@{
+    ViewData["Title"] = "Duyurular";
+    var unreadCount = Model.Count(i => !i.IsRead);
+}
+
+<div class="page-header">
+    <div>
+        <h1>Duyurular</h1>
+        <div class="text-muted small">Yönetimden gelen bilgilendirmeler.</div>
+    </div>
+    @if (unreadCount > 0)
+    {
+        <form asp-action="MarkAllRead" method="post">
+            <button type="submit" class="btn btn-outline-dark">Tümünü okundu işaretle (@unreadCount)</button>
+        </form>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">Size gönderilmiş duyuru yok.</div>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var item in Model)
+        {
+            <a class="list-group-item list-group-item-action @(item.IsRead ? "" : "list-group-item-light fw-semibold")"
+               asp-action="Details" asp-route-id="@item.Announcement.Id">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <div>
+                            @if (!item.IsRead)
+                            {
+                                <span class="badge bg-danger">Yeni</span>
+                            }
+                            @if (item.Announcement.IsPinned)
+                            {
+                                <span class="badge bg-warning text-dark">Önemli</span>
+                            }
+                            @item.Announcement.Title
+                        </div>
+                        <div class="text-muted small fw-normal">@item.Announcement.Preview</div>
+                        @if (item.Announcement.EventSchedule is not null)
+                        {
+                            <div class="text-muted small fw-normal">
+                                @item.Announcement.EventSchedule.Production?.Title ·
+                                @item.Announcement.EventSchedule.EventDate.ToString("d MMM yyyy") ·
+                                @item.Announcement.EventSchedule.City
+                            </div>
+                        }
+                    </div>
+                    <div class="text-muted small text-nowrap fw-normal">
+                        @item.Announcement.CreatedAt.ToLocalTime().ToString("d MMM yyyy")
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+}

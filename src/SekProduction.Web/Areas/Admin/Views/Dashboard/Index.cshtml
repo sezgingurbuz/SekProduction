@@ -1,11 +1,42 @@
 @{
     ViewData["Title"] = "Kontrol Paneli";
+    var draftCount = (int)(ViewData["DraftEventCount"] ?? 0);
 }
 
 <h1>Kontrol Paneli</h1>
 <p class="text-muted">Sek Production yönetim paneline hoş geldiniz.</p>
 
 <div class="row g-3 mt-2">
+    <div class="col-sm-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Yaklaşan Etkinlikler</h5>
+                <p class="card-text display-6">@ViewData["UpcomingEventCount"]</p>
+                <div class="text-muted small mb-2">Bu ay: @ViewData["MonthEventCount"]</div>
+                <a asp-area="Admin" asp-controller="Tour" asp-action="Index" class="btn btn-outline-primary btn-sm">Takvim</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card h-100 @(draftCount > 0 ? "border-warning" : "")">
+            <div class="card-body">
+                <h5 class="card-title">Eksik Bilgili Seanslar</h5>
+                <p class="card-text display-6">@draftCount</p>
+                <div class="text-muted small mb-2">Şehri girilmeyen seanslar ekibe görünmez.</div>
+                <a asp-area="Admin" asp-controller="Tour" asp-action="Index" class="btn btn-outline-warning btn-sm">Tamamla</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Duyurular</h5>
+                <p class="card-text display-6">@ViewData["AnnouncementCount"]</p>
+                <div class="text-muted small mb-2">Okunmamış: @ViewData["UnreadAnnouncementCount"]</div>
+                <a asp-area="Admin" asp-controller="Announcements" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
+            </div>
+        </div>
+    </div>
     <div class="col-sm-6 col-lg-4">
         <div class="card h-100">
             <div class="card-body">
@@ -18,29 +49,19 @@
     <div class="col-sm-6 col-lg-4">
         <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">Yaklaşan Etkinlikler</h5>
-                <p class="card-text display-6">@ViewData["UpcomingEventCount"]</p>
-                <div class="text-muted small mb-2">Bu ay: @ViewData["MonthEventCount"]</div>
-                <a asp-area="Admin" asp-controller="Tour" asp-action="Index" class="btn btn-outline-primary btn-sm">Takvim</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card h-100 @((int)(ViewData["DraftEventCount"] ?? 0) > 0 ? "border-warning" : "")">
-            <div class="card-body">
-                <h5 class="card-title">Eksik Bilgili Seanslar</h5>
-                <p class="card-text display-6">@ViewData["DraftEventCount"]</p>
-                <div class="text-muted small mb-2">Şehri girilmeyen seanslar ekibe görünmez.</div>
-                <a asp-area="Admin" asp-controller="Tour" asp-action="Index" class="btn btn-outline-warning btn-sm">Tamamla</a>
+                <h5 class="card-title">Oteller</h5>
+                <p class="card-text display-6">@ViewData["HotelCount"]</p>
+                <a asp-area="Admin" asp-controller="Hotels" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
             </div>
         </div>
     </div>
     <div class="col-sm-6 col-lg-4">
         <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">Ekip Üyeleri</h5>
-                <p class="card-text display-6">@ViewData["TeamMemberCount"]</p>
-                <a asp-area="Admin" asp-controller="TeamMembers" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
+                <h5 class="card-title">Kullanıcılar</h5>
+                <p class="card-text display-6">@ViewData["UserCount"]</p>
+                <div class="text-muted small mb-2">Ekip üyesi kaydı: @ViewData["TeamMemberCount"]</div>
+                <a asp-area="Admin" asp-controller="Users" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
             </div>
         </div>
     </div>

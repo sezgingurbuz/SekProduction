@@ -1,0 +1,17 @@
+<script>
+    // "Bütün ekibe gönder" seçiliyken kişi listesi gizlenir.
+    (function () {
+        var toggle = document.querySelector("[data-audience-all]");
+        var list = document.querySelector("[data-recipient-list]");
+        if (!toggle || !list) {
+            return;
+        }
+
+        function sync() {
+            list.hidden = toggle.checked;
+        }
+
+        toggle.addEventListener("change", sync);
+        sync();
+    })();
+</script>

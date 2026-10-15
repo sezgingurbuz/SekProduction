@@ -1,0 +1,24 @@
+@model AnnouncementFormViewModel
+@{
+    ViewData["Title"] = $"Duyuru · {Model.Title}";
+}
+
+<div class="admin-page-header">
+    <div>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="text-decoration-none small">&larr; Duyuru</a>
+        <h1>Duyuruyu Düzenle</h1>
+    </div>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="col-lg-10">
+    <partial name="_AnnouncementForm" model="Model" />
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <partial name="_AnnouncementFormScripts" />
+}

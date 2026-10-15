@@ -1,0 +1,72 @@
+@model AnnouncementFormViewModel
+
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+<input type="hidden" asp-for="Id" />
+
+<div class="row g-3">
+    <div class="col-12">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Body" class="form-label"></label>
+        <textarea asp-for="Body" class="form-control" rows="6"
+                  placeholder="Turne programı, ödeme, konaklama, kıyafet bilgisi..."></textarea>
+        <span asp-validation-for="Body" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="EventScheduleId" class="form-label"></label>
+        <select asp-for="EventScheduleId" class="form-select">
+            <option value="">— ilgili etkinlik yok —</option>
+            @foreach (var item in Model.UpcomingEvents)
+            {
+                <option value="@item.Id">@item.EventDate.ToString("d MMM yyyy HH:mm") · @item.Production?.Title · @item.City</option>
+            }
+        </select>
+        <div class="form-text">Seçerseniz duyuru etkinlik bilgisiyle birlikte görünür.</div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-check mt-md-4">
+            <input class="form-check-input" asp-for="IsPinned" />
+            <label class="form-check-label" asp-for="IsPinned"></label>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="form-check">
+            <input class="form-check-input" asp-for="AudienceAll" data-audience-all />
+            <label class="form-check-label" asp-for="AudienceAll"></label>
+        </div>
+    </div>
+
+    <div class="col-12" data-recipient-list>
+        <label class="form-label">Alıcılar</label>
+        @if (!Model.Users.Any())
+        {
+            <div class="text-muted small">Kayıtlı kullanıcı yok.</div>
+        }
+        else
+        {
+            <div class="row g-2">
+                @foreach (var user in Model.Users)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="RecipientIds" value="@user.Id"
+                                   id="recipient-@user.Id" checked="@Model.RecipientIds.Contains(user.Id)" />
+                            <label class="form-check-label" for="recipient-@user.Id">
+                                @user.FullName
+                                <span class="text-muted small">· @user.RoleDisplayName@(user.IsActive ? "" : " · pasif")</span>
+                            </label>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        <span asp-validation-for="RecipientIds" class="text-danger"></span>
+    </div>
+</div>
+

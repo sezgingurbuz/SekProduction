@@ -18,6 +18,8 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
     public DbSet<Hotel> Hotels => Set<Hotel>();
     public DbSet<EventNote> EventNotes => Set<EventNote>();
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<AnnouncementRecipient> AnnouncementRecipients => Set<AnnouncementRecipient>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -38,6 +40,38 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
             .WithMany(p => p.CastMembers)
             .HasForeignKey(c => c.ProductionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Announcement>(entity =>
+        {
+            entity.HasOne(a => a.Author)
+                .WithMany()
+                .HasForeignKey(a => a.AuthorId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Etkinlik silinse de duyuru metni kaybolmaz.
+            entity.HasOne(a => a.EventSchedule)
+                .WithMany()
+                .HasForeignKey(a => a.EventScheduleId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(a => a.CreatedAt);
+        });
+
+        builder.Entity<AnnouncementRecipient>(entity =>
+        {
+            entity.HasOne(r => r.Announcement)
+                .WithMany(a => a.Recipients)
+                .HasForeignKey(r => r.AnnouncementId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(r => new { r.AnnouncementId, r.UserId }).IsUnique();
+            entity.HasIndex(r => new { r.UserId, r.ReadAt });
+        });
 
         builder.Entity<EventNote>(entity =>
         {

@@ -6,9 +6,37 @@
 <div class="page-header">
     <div>
         <h1>Merhaba, @User.DisplayName()</h1>
-        <div class="text-muted small">Yaklaşan etkinlikleriniz ve bu ayın programı.</div>
+        <div class="text-muted small">Yaklaşan etkinlikleriniz, bu ayın programı ve yönetimden gelen duyurular.</div>
     </div>
 </div>
+
+@if (Model.UnreadAnnouncements.Any())
+{
+    <div class="card border-danger mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <h2 class="h6 text-uppercase text-muted">Okunmamış Duyurular</h2>
+                <a asp-controller="Announcements" asp-action="Index" class="small">Tümü</a>
+            </div>
+            <div class="list-group list-group-flush">
+                @foreach (var item in Model.UnreadAnnouncements)
+                {
+                    <a class="list-group-item list-group-item-action px-0"
+                       asp-controller="Announcements" asp-action="Details" asp-route-id="@item.Announcement.Id">
+                        <div class="fw-semibold">
+                            @if (item.Announcement.IsPinned)
+                            {
+                                <span class="badge bg-warning text-dark">Önemli</span>
+                            }
+                            @item.Announcement.Title
+                        </div>
+                        <div class="text-muted small">@item.Announcement.Preview</div>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+}
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-lg-4">
@@ -26,6 +54,15 @@
                 <h6 class="text-muted text-uppercase small mb-1">@DateTime.Today.ToString("MMMM")</h6>
                 <p class="display-6 mb-0">@Model.MonthEventCount</p>
                 <span class="text-muted small">etkinlik</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase small mb-1">Takvim</h6>
+                <p class="mb-2 text-muted small">Bütün ayların programını görün.</p>
+                <a asp-controller="Calendar" asp-action="Index" class="btn btn-sm btn-outline-dark">Takvimi Aç</a>
             </div>
         </div>
     </div>

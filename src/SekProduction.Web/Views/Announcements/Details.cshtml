@@ -1,0 +1,44 @@
+@model InboxItemViewModel
+@{
+    var announcement = Model.Announcement;
+    ViewData["Title"] = announcement.Title;
+}
+
+<div class="page-header">
+    <div>
+        <a asp-action="Index" class="text-decoration-none small">&larr; Duyurular</a>
+        <h1>
+            @announcement.Title
+            @if (announcement.IsPinned)
+            {
+                <span class="badge bg-warning text-dark align-middle fs-6">Önemli</span>
+            }
+        </h1>
+        <div class="text-muted small">
+            @announcement.AuthorName &middot; @announcement.CreatedAt.ToLocalTime().ToString("d MMMM yyyy HH:mm")
+            @if (announcement.UpdatedAt is not null)
+            {
+                <span>&middot; düzenlendi</span>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="card col-lg-9">
+    <div class="card-body">
+        <div style="white-space: pre-line">@announcement.Body</div>
+
+        @if (announcement.EventSchedule is not null)
+        {
+            <hr />
+            <div class="small">
+                İlgili etkinlik:
+                <a asp-controller="Events" asp-action="Details" asp-route-id="@announcement.EventSchedule.Id">
+                    @announcement.EventSchedule.Production?.Title ·
+                    @announcement.EventSchedule.EventDate.ToString("d MMMM yyyy HH:mm") ·
+                    @announcement.EventSchedule.City
+                </a>
+            </div>
+        }
+    </div>
+</div>

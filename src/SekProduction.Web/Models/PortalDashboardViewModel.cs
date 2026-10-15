@@ -8,5 +8,8 @@ public class PortalDashboardViewModel
     public required Dictionary<int, string> ProductionColors { get; init; }
     public required int MonthEventCount { get; init; }
 
+    // Okunmamış duyurular; panelde ilk sırada gösterilir.
+    public required List<InboxItemViewModel> UnreadAnnouncements { get; init; }
+
     public string ColorFor(int productionId) => ProductionColors.GetValueOrDefault(productionId, "#6c757d");
 }

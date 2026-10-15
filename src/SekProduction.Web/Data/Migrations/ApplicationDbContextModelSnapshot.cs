@@ -159,6 +159,86 @@ namespace SekProduction.Web.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("SekProduction.Web.Models.Announcement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AudienceAll")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EventScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsPinned")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("EventScheduleId");
+
+                    b.ToTable("Announcements");
+                });
+
+            modelBuilder.Entity("SekProduction.Web.Models.AnnouncementRecipient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AnnouncementId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnnouncementId", "UserId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ReadAt");
+
+                    b.ToTable("AnnouncementRecipients");
+                });
+
             modelBuilder.Entity("SekProduction.Web.Models.AppUser", b =>
                 {
                     b.Property<string>("Id")
@@ -614,6 +694,42 @@ namespace SekProduction.Web.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SekProduction.Web.Models.Announcement", b =>
+                {
+                    b.HasOne("SekProduction.Web.Models.AppUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SekProduction.Web.Models.EventSchedule", "EventSchedule")
+                        .WithMany()
+                        .HasForeignKey("EventScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Author");
+
+                    b.Navigation("EventSchedule");
+                });
+
+            modelBuilder.Entity("SekProduction.Web.Models.AnnouncementRecipient", b =>
+                {
+                    b.HasOne("SekProduction.Web.Models.Announcement", "Announcement")
+                        .WithMany("Recipients")
+                        .HasForeignKey("AnnouncementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SekProduction.Web.Models.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Announcement");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SekProduction.Web.Models.CastMember", b =>
                 {
                     b.HasOne("SekProduction.Web.Models.Production", "Production")
@@ -663,6 +779,11 @@ namespace SekProduction.Web.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Production");
+                });
+
+            modelBuilder.Entity("SekProduction.Web.Models.Announcement", b =>
+                {
+                    b.Navigation("Recipients");
                 });
 
             modelBuilder.Entity("SekProduction.Web.Models.EventSchedule", b =>

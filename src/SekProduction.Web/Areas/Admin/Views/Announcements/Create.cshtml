@@ -1,0 +1,24 @@
+@model AnnouncementFormViewModel
+@{
+    ViewData["Title"] = "Yeni Duyuru";
+}
+
+<div class="admin-page-header">
+    <div>
+        <a asp-action="Index" class="text-decoration-none small">&larr; Duyurular</a>
+        <h1>Yeni Duyuru</h1>
+    </div>
+</div>
+
+<form asp-action="Create" method="post" class="col-lg-10">
+    <partial name="_AnnouncementForm" model="Model" />
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Gönder</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <partial name="_AnnouncementFormScripts" />
+}
