@@ -1,77 +1,81 @@
-@model IEnumerable<SekProduction.Web.Models.TeamMember>
-
+@model List<TeamMember>
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Ekip";
 }
 
-<h1>Index</h1>
+<div class="admin-page-header">
+    <div>
+        <h1>Ekip</h1>
+        <div class="text-muted small">
+            Oyuncu, teknik ekip ve ofis kayıtları. Kimlik fotokopileri yalnızca yöneticilere görünür.
+        </div>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Yeni Üye</a>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.FullName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Bio)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PhotoUrl)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LinkedInUrl)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DisplayOrder)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsPublished)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.FullName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Bio)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PhotoUrl)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LinkedInUrl)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DisplayOrder)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsPublished)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz ekip üyesi eklenmedi.</p>
 }
-    </tbody>
-</table>
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Ad Soyad</th>
+                <th>Pozisyon</th>
+                <th>E-posta</th>
+                <th>Telefon</th>
+                <th>Kimlik Fotokopisi</th>
+                <th class="text-end"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@member.FullName</td>
+                    <td>@member.Title</td>
+                    <td class="text-muted">
+                        @if (string.IsNullOrWhiteSpace(member.Email))
+                        {
+                            <span>—</span>
+                        }
+                        else
+                        {
+                            <a href="mailto:@member.Email">@member.Email</a>
+                        }
+                    </td>
+                    <td class="text-muted">
+                        @if (string.IsNullOrWhiteSpace(member.PhoneNumber))
+                        {
+                            <span>—</span>
+                        }
+                        else
+                        {
+                            <a href="tel:@member.PhoneNumber">@member.PhoneNumber</a>
+                        }
+                    </td>
+                    <td>
+                        @if (member.HasIdDocument)
+                        {
+                            <a asp-action="Document" asp-route-id="@member.Id" target="_blank" rel="noopener">Görüntüle ↗</a>
+                            <div class="text-muted small">@member.IdDocumentUploadedAt!.Value.ToLocalTime().ToString("d MMM yyyy")</div>
+                        }
+                        else
+                        {
+                            <span class="text-warning">Yok</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@member.Id" class="btn btn-sm btn-outline-dark">Düzenle</a>
+                        <form asp-action="Delete" asp-route-id="@member.Id" method="post" class="d-inline"
+                              data-confirm="Bu ekip üyesi ve kimlik fotokopisi silinsin mi?">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

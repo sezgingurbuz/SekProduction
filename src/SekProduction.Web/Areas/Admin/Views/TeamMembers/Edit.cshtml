@@ -1,66 +1,24 @@
-@model SekProduction.Web.Models.TeamMember
-
+@model TeamMemberFormViewModel
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = $"Ekip · {Model.FullName}";
 }
 
-<h1>Edit</h1>
-
-<h4>TeamMember</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="FullName" class="control-label"></label>
-                <input asp-for="FullName" class="form-control" />
-                <span asp-validation-for="FullName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Bio" class="control-label"></label>
-                <input asp-for="Bio" class="form-control" />
-                <span asp-validation-for="Bio" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PhotoUrl" class="control-label"></label>
-                <input asp-for="PhotoUrl" class="form-control" />
-                <span asp-validation-for="PhotoUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LinkedInUrl" class="control-label"></label>
-                <input asp-for="LinkedInUrl" class="form-control" />
-                <span asp-validation-for="LinkedInUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DisplayOrder" class="control-label"></label>
-                <input asp-for="DisplayOrder" class="form-control" />
-                <span asp-validation-for="DisplayOrder" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsPublished" /> @Html.DisplayNameFor(model => model.IsPublished)
-                </label>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+<div class="admin-page-header">
+    <div>
+        <a asp-action="Index" class="text-decoration-none small">&larr; Ekip</a>
+        <h1>@Model.FullName</h1>
+        <div class="text-muted small">@Model.Title</div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="col-lg-9">
+    <partial name="_TeamMemberForm" model="Model" />
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+    </div>
+</form>
 
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

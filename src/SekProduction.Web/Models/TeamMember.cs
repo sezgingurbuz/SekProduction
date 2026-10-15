@@ -1,35 +1,41 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SekProduction.Web.Models;
 
+// Şirketin ekip kaydı: portal hesabı olmayan kişiler de (oyuncu, teknik ekip) burada tutulur.
 public class TeamMember
 {
     public int Id { get; set; }
 
-    [Required, StringLength(120)]
+    [Required(ErrorMessage = "Ad soyad girin."), StringLength(120)]
     [Display(Name = "Ad Soyad")]
     public string FullName { get; set; } = string.Empty;
 
-    [Required, StringLength(120)]
+    [Required(ErrorMessage = "Pozisyon girin."), StringLength(120)]
     [Display(Name = "Pozisyon")]
     public string Title { get; set; } = string.Empty;
 
-    [Display(Name = "Biyografi")]
-    public string? Bio { get; set; }
-
-    [Display(Name = "Fotoğraf URL")]
-    public string? PhotoUrl { get; set; }
-
-    [StringLength(150), EmailAddress]
+    [StringLength(150), EmailAddress(ErrorMessage = "Geçerli bir e-posta girin.")]
     [Display(Name = "E-posta")]
     public string? Email { get; set; }
 
-    [Display(Name = "LinkedIn URL")]
-    public string? LinkedInUrl { get; set; }
+    [StringLength(30)]
+    [Display(Name = "Telefon Numarası")]
+    public string? PhoneNumber { get; set; }
 
-    [Display(Name = "Sıra")]
-    public int DisplayOrder { get; set; }
+    // Kimlik fotokopisi App_Data altında saklanır; yalnızca yöneticiler görüntüleyebilir.
+    [StringLength(80)]
+    public string? IdDocumentFileName { get; set; }
 
-    [Display(Name = "Yayında")]
-    public bool IsPublished { get; set; } = true;
+    [StringLength(260)]
+    public string? IdDocumentOriginalName { get; set; }
+
+    public DateTime? IdDocumentUploadedAt { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+
+    [NotMapped]
+    public bool HasIdDocument => !string.IsNullOrEmpty(IdDocumentFileName);
 }

@@ -28,6 +28,7 @@ builder.Services.AddControllersWithViews(options =>
     options.ModelBinderProviders.Insert(0, new SekProduction.Web.Services.DecimalModelBinderProvider());
 });
 builder.Services.AddSingleton<SekProduction.Web.Services.ImageStorage>();
+builder.Services.AddSingleton<SekProduction.Web.Services.PrivateFileStorage>();
 builder.Services.AddScoped<SekProduction.Web.Services.CityDirectory>();
 builder.Services.AddScoped<SekProduction.Web.Services.ProductionScope>();
 builder.Services.AddScoped<SekProduction.Web.Services.TourCalendarService>();
