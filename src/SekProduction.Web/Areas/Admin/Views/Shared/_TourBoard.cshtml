@@ -207,7 +207,7 @@
                             + (day == today ? " is-today" : "")
                             + (i % 7 >= 5 ? " is-weekend" : "")
                             + (conflicts.Contains(day) ? " has-conflict" : "");
-                        <div class="@classes" data-drop-date="@day.ToString("yyyy-MM-dd")" data-label="@day.ToString("d MMM")" title="Seçmek için tıklayın">
+                        <div class="@classes" data-drop-date="@day.ToString("yyyy-MM-dd")" data-label="@day.ToString("d MMM")" data-full-label="@day.ToString("d MMMM ddd")" title="Seçmek için tıklayın">
                             <div class="tour-day__top">
                                 <span class="tour-day__num">@day.Day</span>
                                 @if (conflicts.Contains(day))
@@ -221,7 +221,7 @@
                                 var place = string.Join(" · ", new[] { s.City, s.Venue }.Where(x => !string.IsNullOrWhiteSpace(x)));
                                 <button type="button" class="tour-chip @(s.IsReady ? "" : "is-draft")" draggable="true" style="--c: @Model.ColorFor(s.ProductionId)"
                                         data-tour-edit
-                                        data-id="@s.Id" data-production-id="@s.ProductionId"
+                                        data-id="@s.Id" data-production-id="@s.ProductionId" data-production="@s.Production?.Title"
                                         data-date="@s.EventDate.ToString("yyyy-MM-dd")" data-time="@s.EventDate.ToString("HH:mm")"
                                         data-city="@s.City" data-venue="@s.Venue" data-ticket-url="@s.TicketUrl"
                                         title="@s.Production?.Title · @s.EventDate.ToString("HH:mm")@(place.Length > 0 ? $" · {place}" : " · şehir girilmedi")">
@@ -484,9 +484,25 @@
     </div>
 </div>
 
+@* Takvimin altındaki eylem çubukları. *@
+<div class="tour-bars">
+
+@* Sürükleyip bırakılan ama henüz kaydedilmemiş taşımalar; onaylanana kadar hiçbir şey değişmez. *@
+<form method="post" asp-area="Admin" asp-controller="Tour" asp-action="MoveMany" class="tour-bar tour-moves" data-tour-moves hidden>
+    <div class="tour-bar__info">
+        <strong><span data-moves-count>0</span> seans taşındı</strong>
+        <span class="badge bg-warning text-dark">kaydedilmedi</span>
+        <span class="small d-block tour-moves__list" data-moves-list></span>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Değişiklikleri kaydet</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-moves-cancel>İptal et</button>
+    <div data-moves-inputs hidden></div>
+    @{ ReturnFields(); }
+</form>
+
 @* Takvimde seçilen günler için alt çubuk: seçim yapılınca görünür. *@
-<form method="post" asp-area="Admin" asp-controller="Tour" asp-action="AddDays" class="tour-selection" data-tour-selection hidden>
-    <div class="tour-selection__info">
+<form method="post" asp-area="Admin" asp-controller="Tour" asp-action="AddDays" class="tour-bar tour-selection" data-tour-selection hidden>
+    <div class="tour-bar__info">
         <strong><span data-selection-count>0</span> gün seçildi</strong>
         <span class="text-muted small" data-selection-other-months></span>
         <span class="text-muted small d-block text-truncate" data-selection-list></span>
@@ -517,6 +533,8 @@
     <div data-selection-inputs hidden></div>
     @{ ReturnFields(); }
 </form>
+
+</div>
 
 @* Seçili günlerde takvimde görünen seansların toplu silinmesi; kimlikler JS ile doldurulur. *@
 <form method="post" asp-area="Admin" asp-controller="Tour" asp-action="DeleteMany" id="tourBulkDeleteForm" hidden>
@@ -609,4 +627,3 @@
     @{ ReturnFields(); }
 </form>
 
-<form method="post" asp-area="Admin" asp-controller="Tour" asp-action="Move" id="tourMoveForm" hidden></form>

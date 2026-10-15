@@ -37,6 +37,15 @@ public class TourSessionInput
     public string? TicketUrl { get; set; }
 }
 
+// Takvimde sürükleyip bırakılan ama henüz kaydedilmemiş seans taşımaları.
+public class SessionMoveInput
+{
+    public int Id { get; set; }
+
+    [DataType(DataType.Date)]
+    public DateTime Date { get; set; }
+}
+
 public static class TourReturn
 {
     public const string Tour = "tour";

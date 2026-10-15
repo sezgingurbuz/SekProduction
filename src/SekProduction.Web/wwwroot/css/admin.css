@@ -378,13 +378,23 @@ body.admin {
   vertical-align: .05em;
 }
 
-.tour-selection {
+/* Takvimin altındaki eylem çubukları: gün seçimi ve kaydedilmemiş taşımalar alt alta yığılır. */
+.tour-bars {
   position: fixed;
   left: 50%;
   bottom: 1.25rem;
   transform: translateX(-50%);
   z-index: 1030;
   width: min(900px, calc(100% - 2rem));
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  /* Çubuklar gizliyken altındaki takvim tıklanabilir kalsın. */
+  pointer-events: none;
+}
+
+.tour-bar {
+  pointer-events: auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -396,13 +406,29 @@ body.admin {
   box-shadow: 0 .75rem 2rem rgba(16, 24, 40, .18);
 }
 
-.tour-selection__info {
-  flex: 1 1 200px;
+.tour-bar__info {
+  flex: 1 1 220px;
   min-width: 0;
 }
 
-body.has-tour-selection main {
+/* Kaydedilmemiş taşımalar dikkat çeksin diye uyarı rengindedir. */
+.tour-moves {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.tour-moves__list {
+  max-height: 5rem;
+  overflow-y: auto;
+}
+
+body.has-tour-selection main,
+body.has-tour-moves main {
   padding-bottom: 6rem !important;
+}
+
+body.has-tour-selection.has-tour-moves main {
+  padding-bottom: 11rem !important;
 }
 
 .tour-side-title {

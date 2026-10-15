@@ -17,6 +17,7 @@ namespace SekProduction.Web.Areas.Admin.Controllers
     {
         private const int MaxDaysPerRequest = 100;
         private const int MaxSessionsPerDelete = 500;
+        private const int MaxMovesPerRequest = 100;
 
         private readonly ApplicationDbContext _context;
         private readonly TourCalendarService _calendar;
@@ -123,20 +124,66 @@ namespace SekProduction.Web.Areas.Admin.Controllers
             return RedirectToCalendar(entity.EventDate, filter, returnTo, entity.ProductionId);
         }
 
-        // POST: Admin/Tour/Move — sürükle-bırak ile seansı başka güne taşır, saat aynı kalır
+        // POST: Admin/Tour/MoveMany — takvimde sürükleyip bırakılan seansları kaydeder, saatleri aynı kalır.
+        // Sürükleme anında kaydedilmez; kullanıcı alttaki çubuktan onaylayınca buraya gelinir.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Move(int id, DateTime date)
+        public async Task<IActionResult> MoveMany(List<SessionMoveInput> moves, TourFilter filter, string? returnTo)
         {
-            var entity = await _context.EventSchedules.FindAsync(id);
-            if (entity == null)
+            // Aynı seans birden fazla kez sürüklendiyse son bırakılan gün geçerlidir.
+            var requested = moves
+                .GroupBy(m => m.Id)
+                .ToDictionary(g => g.Key, g => g.Last().Date.Date);
+
+            if (requested.Count == 0 || requested.Count > MaxMovesPerRequest)
             {
-                return NotFound();
+                TempData["StatusError"] = requested.Count == 0
+                    ? "Taşınacak seans bulunamadı."
+                    : $"Tek seferde en fazla {MaxMovesPerRequest} seans taşınabilir.";
+                return RedirectToCalendar(DateTime.Today, filter, returnTo, filter.ProductionId);
             }
 
-            entity.EventDate = date.Date + entity.EventDate.TimeOfDay;
+            var ids = requested.Keys.ToList();
+            var query = _context.EventSchedules.Include(e => e.Production).Where(e => ids.Contains(e.Id));
+
+            // Yapım sayfasından gelen istek yalnızca o yapımın seanslarını taşıyabilir.
+            if (returnTo == TourReturn.Production)
+            {
+                query = query.Where(e => e.ProductionId == filter.ProductionId);
+            }
+
+            var sessions = await query.ToListAsync();
+            if (sessions.Count == 0)
+            {
+                TempData["StatusError"] = "Taşınacak seans bulunamadı.";
+                return RedirectToCalendar(DateTime.Today, filter, returnTo, filter.ProductionId);
+            }
+
+            var moved = new List<string>();
+            foreach (var session in sessions.OrderBy(e => e.EventDate))
+            {
+                var target = requested[session.Id];
+                if (session.EventDate.Date == target)
+                {
+                    continue;
+                }
+
+                moved.Add($"{session.Production?.Title} · {session.City ?? "şehir girilmedi"}: {session.EventDate:d MMMM} → {target:d MMMM}");
+                session.EventDate = target + session.EventDate.TimeOfDay;
+            }
+
+            if (moved.Count == 0)
+            {
+                TempData["StatusMessage"] = "Seanslar zaten bulundukları günlerdeydi, değişiklik yapılmadı.";
+                return RedirectToCalendar(sessions[0].EventDate, filter, returnTo, filter.ProductionId);
+            }
+
             await _context.SaveChangesAsync();
-            return NoContent();
+
+            TempData["StatusMessage"] = moved.Count == 1
+                ? $"Seans taşındı. {moved[0]}"
+                : $"{moved.Count} seans taşındı: {string.Join(" | ", moved)}";
+            return RedirectToCalendar(sessions.Min(s => s.EventDate), filter, returnTo, filter.ProductionId);
         }
 
         // POST: Admin/Tour/Delete

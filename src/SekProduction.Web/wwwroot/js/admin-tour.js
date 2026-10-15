@@ -297,60 +297,149 @@
     }
 
     // Sürükle-bırak: seansı başka bir güne taşır, saati korunur.
-    var token = document.querySelector('#tourMoveForm input[name="__RequestVerificationToken"]');
-    var moveUrl = document.getElementById('tourMoveForm').getAttribute('action');
-    var dragged = null;
+    // Bırakma anında KAYDEDİLMEZ; yanlışlıkla taşımayı önlemek için değişiklik alttaki
+    // çubukta bekler, kullanıcı "Değişiklikleri kaydet" deyince sunucuya gider.
+    var movesForm = document.querySelector('[data-tour-moves]');
+    if (movesForm) {
+        var movesCount = movesForm.querySelector('[data-moves-count]');
+        var movesList = movesForm.querySelector('[data-moves-list]');
+        var movesInputs = movesForm.querySelector('[data-moves-inputs]');
+        var movesCancel = movesForm.querySelector('[data-moves-cancel]');
 
-    document.querySelectorAll('.tour-chip[draggable="true"]').forEach(function (chip) {
-        chip.addEventListener('dragstart', function (e) {
-            dragged = chip;
-            chip.classList.add('is-dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', chip.dataset.id);
-        });
-        chip.addEventListener('dragend', function () {
-            chip.classList.remove('is-dragging');
-            dragged = null;
-        });
-    });
+        // id -> { chip, fromCell, fromDate, fromLabel, toLabel }
+        var pending = {};
+        var saving = false;
+        var dragged = null;
 
-    document.querySelectorAll('[data-drop-date]').forEach(function (day) {
-        day.addEventListener('dragover', function (e) {
-            if (!dragged) {
-                return;
+        var labelOf = function (cell) {
+            return cell.dataset.fullLabel || cell.dataset.label || cell.dataset.dropDate;
+        };
+
+        // Seansı hedef günde saat sırasına göre yerleştirir.
+        var placeChip = function (cell, chip) {
+            var siblings = cell.querySelectorAll('.tour-chip');
+            for (var i = 0; i < siblings.length; i++) {
+                if (siblings[i] !== chip && (siblings[i].dataset.time || '') > (chip.dataset.time || '')) {
+                    cell.insertBefore(chip, siblings[i]);
+                    return;
+                }
             }
-            e.preventDefault();
-            day.classList.add('is-drop-target');
-        });
-        day.addEventListener('dragleave', function (e) {
-            if (!day.contains(e.relatedTarget)) {
-                day.classList.remove('is-drop-target');
-            }
-        });
-        day.addEventListener('drop', function (e) {
-            e.preventDefault();
-            day.classList.remove('is-drop-target');
-            if (!dragged || dragged.dataset.date === day.dataset.dropDate) {
-                return;
-            }
+            cell.appendChild(chip);
+        };
 
-            var body = new FormData();
-            body.append('id', dragged.dataset.id);
-            body.append('date', day.dataset.dropDate);
-            body.append('__RequestVerificationToken', token.value);
+        var renderMoves = function () {
+            var ids = Object.keys(pending);
+            movesForm.hidden = ids.length === 0;
+            document.body.classList.toggle('has-tour-moves', ids.length > 0);
+            movesCount.textContent = ids.length;
 
-            day.appendChild(dragged);
-            fetch(moveUrl, { method: 'POST', body: body, credentials: 'same-origin' })
-                .then(function (response) {
-                    if (!response.ok) {
-                        throw new Error(response.status);
-                    }
-                    location.reload();
-                })
-                .catch(function () {
-                    alert('Seans taşınamadı, sayfa yenileniyor.');
-                    location.reload();
+            movesList.textContent = '';
+            ids.forEach(function (id) {
+                var entry = pending[id];
+                var name = entry.chip.dataset.production || 'Seans';
+                var city = entry.chip.dataset.city;
+                var line = document.createElement('div');
+                line.textContent = name + (city ? ' · ' + city : '')
+                    + ': ' + entry.fromLabel + ' → ' + entry.toLabel + ' gününe taşındı';
+                movesList.appendChild(line);
+            });
+
+            movesInputs.innerHTML = '';
+            ids.forEach(function (id, index) {
+                [['Id', id], ['Date', pending[id].toDate]].forEach(function (pair) {
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'moves[' + index + '].' + pair[0];
+                    input.value = pair[1];
+                    movesInputs.appendChild(input);
                 });
+            });
+        };
+
+        var cancelMoves = function () {
+            Object.keys(pending).forEach(function (id) {
+                var entry = pending[id];
+                entry.chip.dataset.date = entry.fromDate;
+                placeChip(entry.fromCell, entry.chip);
+            });
+            pending = {};
+            renderMoves();
+        };
+
+        movesCancel.addEventListener('click', cancelMoves);
+        movesForm.addEventListener('submit', function () {
+            saving = true;
+            rememberScroll();
         });
-    });
+
+        // Kaydedilmemiş taşıma varken sayfadan ayrılmak değişikliği düşürür; kullanıcı uyarılır.
+        window.addEventListener('beforeunload', function (e) {
+            if (saving || !Object.keys(pending).length) {
+                return;
+            }
+            e.preventDefault();
+            e.returnValue = '';
+        });
+
+        document.querySelectorAll('.tour-chip[draggable="true"]').forEach(function (chip) {
+            chip.addEventListener('dragstart', function (e) {
+                dragged = chip;
+                chip.classList.add('is-dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', chip.dataset.id);
+            });
+            chip.addEventListener('dragend', function () {
+                chip.classList.remove('is-dragging');
+                dragged = null;
+            });
+        });
+
+        document.querySelectorAll('[data-drop-date]').forEach(function (day) {
+            day.addEventListener('dragover', function (e) {
+                if (!dragged) {
+                    return;
+                }
+                e.preventDefault();
+                day.classList.add('is-drop-target');
+            });
+            day.addEventListener('dragleave', function (e) {
+                if (!day.contains(e.relatedTarget)) {
+                    day.classList.remove('is-drop-target');
+                }
+            });
+            day.addEventListener('drop', function (e) {
+                e.preventDefault();
+                day.classList.remove('is-drop-target');
+                if (!dragged || dragged.dataset.date === day.dataset.dropDate) {
+                    return;
+                }
+
+                var chip = dragged;
+                var id = chip.dataset.id;
+                // Aynı seans yeniden sürüklendiyse ilk konumu korunur, hedef güncellenir.
+                var entry = pending[id] || {
+                    chip: chip,
+                    fromCell: chip.closest('[data-drop-date]'),
+                    fromDate: chip.dataset.date,
+                    fromLabel: labelOf(chip.closest('[data-drop-date]'))
+                };
+
+                chip.dataset.date = day.dataset.dropDate;
+                placeChip(day, chip);
+
+                if (entry.fromDate === day.dataset.dropDate) {
+                    // Kendi gününe geri bırakıldı; bekleyen değişiklik kalmadı.
+                    delete pending[id];
+                } else {
+                    entry.toDate = day.dataset.dropDate;
+                    entry.toLabel = labelOf(day);
+                    pending[id] = entry;
+                }
+
+                renderMoves();
+            });
+        });
+
+        renderMoves();
+    }
 })();
