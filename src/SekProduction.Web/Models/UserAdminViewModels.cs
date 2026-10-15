@@ -12,6 +12,9 @@ public class UserListItemViewModel
     public required bool IsActive { get; init; }
     public DateTime CreatedAt { get; init; }
 
+    // Çalışanın görevli olduğu yapımlar. Boşsa kısıt yoktur, bütün etkinlikleri görür.
+    public List<string> ProductionTitles { get; init; } = new();
+
     public string RoleDisplayName => AppRoles.DisplayName(Role);
 }
 
@@ -46,6 +49,13 @@ public class UserFormViewModel
     [Compare(nameof(Password), ErrorMessage = "Şifreler aynı değil.")]
     [Display(Name = "Şifre (tekrar)")]
     public string? ConfirmPassword { get; set; }
+
+    // Çalışanın görevli olduğu yapımlar; yalnızca bu yapımların etkinlikleri paneline düşer.
+    [Display(Name = "Görevli olduğu yapımlar")]
+    public List<int> ProductionIds { get; set; } = new();
+
+    // Formu doldurmak için gereken yapım listesi.
+    public List<Production> Productions { get; set; } = new();
 
     public bool IsNew => string.IsNullOrEmpty(Id);
 }

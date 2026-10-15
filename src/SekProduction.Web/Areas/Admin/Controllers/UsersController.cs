@@ -24,7 +24,12 @@ public class UsersController : Controller
     // GET: Admin/Users
     public async Task<IActionResult> Index()
     {
-        var users = await _userManager.Users.OrderBy(u => u.FullName).ThenBy(u => u.Email).ToListAsync();
+        var users = await _userManager.Users
+            .Include(u => u.ProductionAssignments).ThenInclude(a => a.Production)
+            .OrderBy(u => u.FullName)
+            .ThenBy(u => u.Email)
+            .ToListAsync();
+
         var items = new List<UserListItemViewModel>(users.Count);
         foreach (var user in users)
         {
@@ -35,7 +40,12 @@ public class UsersController : Controller
     }
 
     // GET: Admin/Users/Create
-    public IActionResult Create() => View(new UserFormViewModel());
+    public async Task<IActionResult> Create()
+    {
+        var form = new UserFormViewModel();
+        await FillOptionsAsync(form);
+        return View(form);
+    }
 
     // POST: Admin/Users/Create
     [HttpPost]
@@ -52,6 +62,7 @@ public class UsersController : Controller
         }
         if (!ModelState.IsValid)
         {
+            await FillOptionsAsync(form);
             return View(form);
         }
 
@@ -69,11 +80,13 @@ public class UsersController : Controller
         if (!created.Succeeded)
         {
             AddErrors(created);
+            await FillOptionsAsync(form);
             return View(form);
         }
 
         await _userManager.AddToRoleAsync(user, form.Role);
         await SetActiveAsync(user, form.IsActive);
+        await SyncProductionsAsync(user.Id, form.ProductionIds);
 
         TempData["StatusMessage"] = $"{user.FullName} ({AppRoles.DisplayName(form.Role)}) hesabı oluşturuldu.";
         return RedirectToAction(nameof(Index));
@@ -82,21 +95,28 @@ public class UsersController : Controller
     // GET: Admin/Users/Edit/<id>
     public async Task<IActionResult> Edit(string? id)
     {
-        var user = id is null ? null : await _userManager.FindByIdAsync(id);
+        var user = id is null
+            ? null
+            : await _userManager.Users
+                .Include(u => u.ProductionAssignments)
+                .FirstOrDefaultAsync(u => u.Id == id);
         if (user is null)
         {
             return NotFound();
         }
 
-        return View(new UserFormViewModel
+        var form = new UserFormViewModel
         {
             Id = user.Id,
             FullName = user.FullName,
             JobTitle = user.JobTitle,
             Email = user.Email ?? string.Empty,
             Role = await GetRoleAsync(user),
-            IsActive = user.IsActive
-        });
+            IsActive = user.IsActive,
+            ProductionIds = user.ProductionAssignments.Select(a => a.ProductionId).ToList()
+        };
+        await FillOptionsAsync(form);
+        return View(form);
     }
 
     // POST: Admin/Users/Edit/<id>
@@ -128,6 +148,7 @@ public class UsersController : Controller
         form.Id = user.Id;
         if (!ModelState.IsValid)
         {
+            await FillOptionsAsync(form);
             return View(form);
         }
 
@@ -141,6 +162,7 @@ public class UsersController : Controller
         if (!updated.Succeeded)
         {
             AddErrors(updated);
+            await FillOptionsAsync(form);
             return View(form);
         }
 
@@ -151,6 +173,7 @@ public class UsersController : Controller
             if (!reset.Succeeded)
             {
                 AddErrors(reset);
+                await FillOptionsAsync(form);
                 return View(form);
             }
         }
@@ -162,6 +185,7 @@ public class UsersController : Controller
         }
 
         await SetActiveAsync(user, form.IsActive);
+        await SyncProductionsAsync(user.Id, form.ProductionIds);
 
         TempData["StatusMessage"] = $"{user.FullName} hesabı güncellendi.";
         return RedirectToAction(nameof(Index));
@@ -228,6 +252,42 @@ public class UsersController : Controller
         await _userManager.SetLockoutEndDateAsync(user, isActive ? null : DateTimeOffset.MaxValue);
     }
 
+    // Çalışanın görevli olduğu yapımları formdaki seçime göre günceller.
+    private async Task SyncProductionsAsync(string userId, List<int> productionIds)
+    {
+        var valid = await _context.Productions
+            .Where(p => productionIds.Contains(p.Id))
+            .Select(p => p.Id)
+            .ToListAsync();
+
+        var existing = await _context.UserProductions
+            .Where(up => up.UserId == userId)
+            .ToListAsync();
+
+        var removed = existing.Where(up => !valid.Contains(up.ProductionId)).ToList();
+        if (removed.Count > 0)
+        {
+            _context.UserProductions.RemoveRange(removed);
+        }
+
+        var existingIds = existing.Select(up => up.ProductionId).ToHashSet();
+        foreach (var productionId in valid.Where(id => !existingIds.Contains(id)))
+        {
+            _context.UserProductions.Add(new UserProduction { UserId = userId, ProductionId = productionId });
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task FillOptionsAsync(UserFormViewModel form)
+    {
+        form.Productions = await _context.Productions
+            .OrderBy(p => p.Category)
+            .ThenBy(p => p.DisplayOrder)
+            .ThenBy(p => p.Title)
+            .ToListAsync();
+    }
+
     private async Task<UserListItemViewModel> ToListItemAsync(AppUser user) => new()
     {
         Id = user.Id,
@@ -236,7 +296,12 @@ public class UsersController : Controller
         Email = user.Email ?? string.Empty,
         Role = await GetRoleAsync(user),
         IsActive = user.IsActive,
-        CreatedAt = user.CreatedAt
+        CreatedAt = user.CreatedAt,
+        ProductionTitles = user.ProductionAssignments
+            .Where(a => a.Production is not null)
+            .Select(a => a.Production!.Title)
+            .OrderBy(t => t)
+            .ToList()
     };
 
     private void AddErrors(IdentityResult result)

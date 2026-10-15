@@ -18,14 +18,16 @@ public class CityDirectory
     }
 
     // Etkinlik girilmiş şehirler (takvim ve otel sayfasındaki filtreler bunu kullanır).
-    public async Task<List<string>> EventCitiesAsync()
+    // allowedProductionIds verilirse yalnızca o yapımların şehirleri döner.
+    public async Task<List<string>> EventCitiesAsync(IReadOnlySet<int>? allowedProductionIds = null)
     {
-        var cities = await _context.EventSchedules
-            .Where(e => e.City != null && e.City != "")
-            .Select(e => e.City!)
-            .Distinct()
-            .ToListAsync();
+        var query = _context.EventSchedules.Where(e => e.City != null && e.City != "");
+        if (allowedProductionIds is not null)
+        {
+            query = query.Where(e => allowedProductionIds.Contains(e.ProductionId));
+        }
 
+        var cities = await query.Select(e => e.City!).Distinct().ToListAsync();
         return Sorted(cities);
     }
 

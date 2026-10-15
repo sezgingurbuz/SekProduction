@@ -17,6 +17,8 @@ public class AppUser : IdentityUser
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public ICollection<UserProduction> ProductionAssignments { get; set; } = new List<UserProduction>();
+
     // Pasife alınan hesap Identity'nin kilit mekanizmasıyla engellenir; ayrı bir bayrak tutulmaz.
     [NotMapped]
     public bool IsActive => LockoutEnd is null || LockoutEnd <= DateTimeOffset.UtcNow;

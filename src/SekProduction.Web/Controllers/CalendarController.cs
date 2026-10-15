@@ -8,15 +8,18 @@ namespace SekProduction.Web.Controllers;
 public class CalendarController : Controller
 {
     private readonly TourCalendarService _calendar;
+    private readonly ProductionScope _scope;
 
-    public CalendarController(TourCalendarService calendar)
+    public CalendarController(TourCalendarService calendar, ProductionScope scope)
     {
         _calendar = calendar;
+        _scope = scope;
     }
 
     // GET: /Calendar?year=2026&month=10&productionId=3&city=Ankara
     public async Task<IActionResult> Index(int? year, int? month, TourFilter filter)
     {
-        return View(await _calendar.BuildAsync(year, month, filter, readyOnly: true));
+        var allowed = await _scope.AllowedProductionIdsAsync(User);
+        return View(await _calendar.BuildAsync(year, month, filter, readyOnly: true, allowedProductionIds: allowed));
     }
 }

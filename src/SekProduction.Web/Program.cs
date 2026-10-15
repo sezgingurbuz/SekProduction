@@ -29,6 +29,7 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddSingleton<SekProduction.Web.Services.ImageStorage>();
 builder.Services.AddScoped<SekProduction.Web.Services.CityDirectory>();
+builder.Services.AddScoped<SekProduction.Web.Services.ProductionScope>();
 builder.Services.AddScoped<SekProduction.Web.Services.TourCalendarService>();
 
 var app = builder.Build();

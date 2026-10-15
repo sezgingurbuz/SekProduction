@@ -13,12 +13,18 @@ public class EventsController : Controller
     private readonly ApplicationDbContext _context;
     private readonly TourCalendarService _calendar;
     private readonly UserManager<AppUser> _userManager;
+    private readonly ProductionScope _scope;
 
-    public EventsController(ApplicationDbContext context, TourCalendarService calendar, UserManager<AppUser> userManager)
+    public EventsController(
+        ApplicationDbContext context,
+        TourCalendarService calendar,
+        UserManager<AppUser> userManager,
+        ProductionScope scope)
     {
         _context = context;
         _calendar = calendar;
         _userManager = userManager;
+        _scope = scope;
     }
 
     // GET: /Events/Details/5
@@ -34,19 +40,29 @@ public class EventsController : Controller
             return NotFound();
         }
 
-        var sameDay = await _context.EventSchedules
+        // Çalışan görevli olmadığı yapımın etkinliğini açamaz.
+        var allowed = await _scope.AllowedProductionIdsAsync(User);
+        if (allowed is not null && !allowed.Contains(current.ProductionId))
+        {
+            return NotFound();
+        }
+
+        var sameDayQuery = _context.EventSchedules
             .Include(e => e.Production)
             .Where(e => e.Id != current.Id
                 && e.EventDate >= current.EventDate.Date
                 && e.EventDate < current.EventDate.Date.AddDays(1)
-                && e.City != null && e.City != "")
-            .OrderBy(e => e.EventDate)
-            .ToListAsync();
+                && e.City != null && e.City != "");
+
+        if (allowed is not null)
+        {
+            sameDayQuery = sameDayQuery.Where(e => allowed.Contains(e.ProductionId));
+        }
 
         return View(new EventDetailsViewModel
         {
             Event = current,
-            SameDayEvents = sameDay,
+            SameDayEvents = await sameDayQuery.OrderBy(e => e.EventDate).ToListAsync(),
             Hotels = await HotelsInCityAsync(current.City!),
             TeamNotes = await NotesAsync(current.Id, EventNoteScope.Team),
             MyNotes = await NotesAsync(current.Id, EventNoteScope.Private, _userManager.GetUserId(User)),

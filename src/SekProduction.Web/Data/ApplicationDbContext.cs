@@ -19,6 +19,7 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<Hotel> Hotels => Set<Hotel>();
     public DbSet<EventNote> EventNotes => Set<EventNote>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<UserProduction> UserProductions => Set<UserProduction>();
     public DbSet<AnnouncementRecipient> AnnouncementRecipients => Set<AnnouncementRecipient>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -40,6 +41,21 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
             .WithMany(p => p.CastMembers)
             .HasForeignKey(c => c.ProductionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UserProduction>(entity =>
+        {
+            entity.HasOne(up => up.User)
+                .WithMany(u => u.ProductionAssignments)
+                .HasForeignKey(up => up.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(up => up.Production)
+                .WithMany()
+                .HasForeignKey(up => up.ProductionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(up => new { up.UserId, up.ProductionId }).IsUnique();
+        });
 
         builder.Entity<Announcement>(entity =>
         {

@@ -643,6 +643,31 @@ namespace SekProduction.Web.Data.Migrations
                     b.ToTable("TeamMembers");
                 });
 
+            modelBuilder.Entity("SekProduction.Web.Models.UserProduction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ProductionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductionId");
+
+                    b.HasIndex("UserId", "ProductionId")
+                        .IsUnique();
+
+                    b.ToTable("UserProductions");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -781,9 +806,33 @@ namespace SekProduction.Web.Data.Migrations
                     b.Navigation("Production");
                 });
 
+            modelBuilder.Entity("SekProduction.Web.Models.UserProduction", b =>
+                {
+                    b.HasOne("SekProduction.Web.Models.Production", "Production")
+                        .WithMany()
+                        .HasForeignKey("ProductionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SekProduction.Web.Models.AppUser", "User")
+                        .WithMany("ProductionAssignments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Production");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SekProduction.Web.Models.Announcement", b =>
                 {
                     b.Navigation("Recipients");
+                });
+
+            modelBuilder.Entity("SekProduction.Web.Models.AppUser", b =>
+                {
+                    b.Navigation("ProductionAssignments");
                 });
 
             modelBuilder.Entity("SekProduction.Web.Models.EventSchedule", b =>

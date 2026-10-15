@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SekProduction.Web.Data;
 using SekProduction.Web.Models;
+using SekProduction.Web.Services;
 
 namespace SekProduction.Web.Controllers;
 
@@ -11,11 +12,13 @@ public class EventNotesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<AppUser> _userManager;
+    private readonly ProductionScope _scope;
 
-    public EventNotesController(ApplicationDbContext context, UserManager<AppUser> userManager)
+    public EventNotesController(ApplicationDbContext context, UserManager<AppUser> userManager, ProductionScope scope)
     {
         _context = context;
         _userManager = userManager;
+        _scope = scope;
     }
 
     // POST: /EventNotes/Create
@@ -30,6 +33,13 @@ public class EventNotesController : Controller
         }
 
         if (scope == EventNoteScope.Team && !User.IsInRole(AppRoles.Admin))
+        {
+            return Forbid();
+        }
+
+        // Görevli olmadığı yapımın etkinliğine not bırakılamaz.
+        var allowed = await _scope.AllowedProductionIdsAsync(User);
+        if (allowed is not null && !allowed.Contains(schedule.ProductionId))
         {
             return Forbid();
         }

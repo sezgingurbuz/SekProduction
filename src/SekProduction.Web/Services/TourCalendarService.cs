@@ -26,7 +26,7 @@ public class TourCalendarService
     }
 
     // readyOnly: şehri girilmemiş taslak seanslar ekibe gösterilmez.
-    public async Task<TourCalendarViewModel> BuildAsync(int? year, int? month, TourFilter filter, Production? fixedProduction = null, bool readyOnly = false)
+    public async Task<TourCalendarViewModel> BuildAsync(int? year, int? month, TourFilter filter, Production? fixedProduction = null, bool readyOnly = false, IReadOnlySet<int>? allowedProductionIds = null)
     {
         if (fixedProduction is not null)
         {
@@ -44,24 +44,30 @@ public class TourCalendarService
         var weeks = (int)Math.Ceiling((offset + DateTime.DaysInMonth(first.Year, first.Month)) / 7.0);
         var gridEnd = gridStart.AddDays(weeks * 7);
 
-        var productions = await _context.Productions
+        var productionQuery = _context.Productions.AsQueryable();
+        if (allowedProductionIds is not null)
+        {
+            productionQuery = productionQuery.Where(p => allowedProductionIds.Contains(p.Id));
+        }
+
+        var productions = await productionQuery
             .OrderBy(p => p.Category)
             .ThenBy(p => p.DisplayOrder)
             .ThenBy(p => p.Title)
             .ToListAsync();
 
-        var sessions = await Filtered(filter, readyOnly)
+        var sessions = await Filtered(filter, readyOnly, allowedProductionIds)
             .Where(e => e.EventDate >= gridStart && e.EventDate < gridEnd)
             .OrderBy(e => e.EventDate)
             .ToListAsync();
 
         // Haritanın "Yaklaşan tümü" görünümü ve yapım sayfasının yan paneli için
-        var upcoming = await Filtered(filter, readyOnly)
+        var upcoming = await Filtered(filter, readyOnly, allowedProductionIds)
             .Where(e => e.EventDate >= today)
             .OrderBy(e => e.EventDate)
             .ToListAsync();
 
-        var cities = await _cities.EventCitiesAsync();
+        var cities = await _cities.EventCitiesAsync(allowedProductionIds);
         var venues = await _context.EventSchedules
             .Where(e => e.Venue != null && e.Venue != "")
             .Select(e => e.Venue!)
@@ -96,9 +102,15 @@ public class TourCalendarService
         .Select((id, index) => (id, Color: Palette[index % Palette.Length]))
         .ToDictionary(x => x.id, x => x.Color);
 
-    private IQueryable<EventSchedule> Filtered(TourFilter filter, bool readyOnly)
+    private IQueryable<EventSchedule> Filtered(TourFilter filter, bool readyOnly, IReadOnlySet<int>? allowedProductionIds = null)
     {
         var query = _context.EventSchedules.Include(e => e.Production).AsQueryable();
+
+        // Çalışan yalnızca görevli olduğu yapımların seanslarını görür.
+        if (allowedProductionIds is not null)
+        {
+            query = query.Where(e => allowedProductionIds.Contains(e.ProductionId));
+        }
 
         if (readyOnly)
         {

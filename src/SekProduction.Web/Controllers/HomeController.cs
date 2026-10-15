@@ -18,12 +18,18 @@ public class HomeController : Controller
     private readonly ApplicationDbContext _context;
     private readonly TourCalendarService _calendar;
     private readonly UserManager<AppUser> _userManager;
+    private readonly ProductionScope _scope;
 
-    public HomeController(ApplicationDbContext context, TourCalendarService calendar, UserManager<AppUser> userManager)
+    public HomeController(
+        ApplicationDbContext context,
+        TourCalendarService calendar,
+        UserManager<AppUser> userManager,
+        ProductionScope scope)
     {
         _context = context;
         _calendar = calendar;
         _userManager = userManager;
+        _scope = scope;
     }
 
     public async Task<IActionResult> Index()
@@ -38,6 +44,13 @@ public class HomeController : Controller
             .Include(e => e.Production)
             .Where(e => e.City != null && e.City != "");
 
+        // Çalışan yalnızca görevli olduğu yapımların etkinliklerini görür.
+        var allowed = await _scope.AllowedProductionIdsAsync(User);
+        if (allowed is not null)
+        {
+            ready = ready.Where(e => allowed.Contains(e.ProductionId));
+        }
+
         return View(new PortalDashboardViewModel
         {
             TodayEvents = await ready
@@ -51,6 +64,9 @@ public class HomeController : Controller
                 .ToListAsync(),
             MonthEventCount = await ready.CountAsync(e => e.EventDate >= monthStart && e.EventDate < monthEnd),
             UnreadAnnouncements = await UnreadAnnouncementsAsync(),
+            AssignedProductionTitles = allowed is null
+                ? new List<string>()
+                : await _context.Productions.Where(p => allowed.Contains(p.Id)).OrderBy(p => p.Title).Select(p => p.Title).ToListAsync(),
             ProductionColors = await _calendar.ProductionColorsAsync()
         });
     }

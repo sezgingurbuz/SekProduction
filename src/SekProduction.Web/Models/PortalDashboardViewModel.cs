@@ -11,5 +11,8 @@ public class PortalDashboardViewModel
     // Okunmamış duyurular; panelde ilk sırada gösterilir.
     public required List<InboxItemViewModel> UnreadAnnouncements { get; init; }
 
+    // Çalışanın görevli olduğu yapımlar. Boşsa kısıt yoktur, bütün etkinlikler görünür.
+    public required List<string> AssignedProductionTitles { get; init; }
+
     public string ColorFor(int productionId) => ProductionColors.GetValueOrDefault(productionId, "#6c757d");
 }

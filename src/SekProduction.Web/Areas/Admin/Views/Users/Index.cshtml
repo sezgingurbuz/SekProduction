@@ -26,6 +26,7 @@ else
                 <th>Görev</th>
                 <th>E-posta</th>
                 <th>Yetki</th>
+                <th>Görevli Yapımlar</th>
                 <th>Durum</th>
                 <th class="text-end"></th>
             </tr>
@@ -39,6 +40,23 @@ else
                     <td class="text-muted">@user.Email</td>
                     <td>
                         <span class="badge rounded-pill @(user.Role == AppRoles.Admin ? "bg-dark" : "bg-secondary")">@user.RoleDisplayName</span>
+                    </td>
+                    <td class="small">
+                        @if (user.Role == AppRoles.Admin)
+                        {
+                            <span class="text-muted">Tümü (yönetici)</span>
+                        }
+                        else if (!user.ProductionTitles.Any())
+                        {
+                            <span class="text-muted">Tümü (bağ girilmemiş)</span>
+                        }
+                        else
+                        {
+                            @foreach (var title in user.ProductionTitles)
+                            {
+                                <span class="badge rounded-pill bg-light text-dark border">@title</span>
+                            }
+                        }
                     </td>
                     <td>
                         @if (user.IsActive)

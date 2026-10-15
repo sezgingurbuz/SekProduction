@@ -7,6 +7,16 @@
     <div>
         <h1>Merhaba, @User.DisplayName()</h1>
         <div class="text-muted small">Yaklaşan etkinlikleriniz, bu ayın programı ve yönetimden gelen duyurular.</div>
+        @if (Model.AssignedProductionTitles.Any())
+        {
+            <div class="small mt-1">
+                <span class="text-muted">Görevli olduğunuz yapımlar:</span>
+                @foreach (var title in Model.AssignedProductionTitles)
+                {
+                    <span class="badge rounded-pill bg-light text-dark border">@title</span>
+                }
+            </div>
+        }
     </div>
 </div>
 

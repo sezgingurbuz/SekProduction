@@ -34,7 +34,7 @@
                 <option value="@role">@AppRoles.DisplayName(role)</option>
             }
         </select>
-        <div class="form-text">Yöneticiler etkinlikleri düzenler, duyuru gönderir ve kullanıcı açar.</div>
+        <div class="form-text">Yöneticiler bütün etkinlikleri görür, duyuru gönderir ve kullanıcı açar.</div>
         <span asp-validation-for="Role" class="text-danger"></span>
     </div>
     <div class="col-md-6">
@@ -58,5 +58,41 @@
             <div class="form-text">Pasif hesaplar portala giriş yapamaz.</div>
         </div>
         <span asp-validation-for="IsActive" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <hr />
+        <label class="form-label">@Html.DisplayNameFor(m => m.ProductionIds)</label>
+        <div class="form-text mb-2">
+            Seçtiğiniz yapımların etkinlik tarihleri çalışanın takvimine ve panelinde görünür.
+            Hiçbirini seçmezseniz çalışan bütün etkinlikleri görür.
+        </div>
+
+        @if (!Model.Productions.Any())
+        {
+            <div class="text-muted small">Kayıtlı yapım yok.</div>
+        }
+        else
+        {
+            @foreach (var group in Model.Productions.GroupBy(p => p.Category))
+            {
+                <div class="mb-2">
+                    <div class="fw-semibold small text-muted">@group.Key.GetDisplayName()</div>
+                    <div class="row g-2">
+                        @foreach (var production in group)
+                        {
+                            <div class="col-md-6 col-lg-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="ProductionIds" value="@production.Id"
+                                           id="production-@production.Id" checked="@Model.ProductionIds.Contains(production.Id)" />
+                                    <label class="form-check-label" for="production-@production.Id">@production.Title</label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        <span asp-validation-for="ProductionIds" class="text-danger"></span>
     </div>
 </div>
