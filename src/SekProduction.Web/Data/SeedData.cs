@@ -6,7 +6,7 @@ namespace SekProduction.Web.Data;
 
 public static class SeedData
 {
-    public const string AdminRole = "Admin";
+    public const string AdminRole = AppRoles.Admin;
 
     public static async Task InitializeAsync(IServiceProvider services, IConfiguration configuration)
     {
@@ -14,30 +14,40 @@ public static class SeedData
         await context.Database.MigrateAsync();
 
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        if (!await roleManager.RoleExistsAsync(AdminRole))
+        foreach (var role in AppRoles.All)
         {
-            await roleManager.CreateAsync(new IdentityRole(AdminRole));
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+            }
         }
 
-        var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
         var adminEmail = configuration["Seed:AdminEmail"] ?? "admin@sekproduction.local";
         var adminPassword = configuration["Seed:AdminPassword"] ?? "ChangeMe!2026";
 
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
         if (adminUser is null)
         {
-            adminUser = new IdentityUser
+            adminUser = new AppUser
             {
                 UserName = adminEmail,
                 Email = adminEmail,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                FullName = "Sistem Yöneticisi",
+                JobTitle = "Yönetici"
             };
             await userManager.CreateAsync(adminUser, adminPassword);
         }
-
-        if (!await userManager.IsInRoleAsync(adminUser, AdminRole))
+        else if (string.IsNullOrWhiteSpace(adminUser.FullName))
         {
-            await userManager.AddToRoleAsync(adminUser, AdminRole);
+            adminUser.FullName = "Sistem Yöneticisi";
+            await userManager.UpdateAsync(adminUser);
+        }
+
+        if (!await userManager.IsInRoleAsync(adminUser, AppRoles.Admin))
+        {
+            await userManager.AddToRoleAsync(adminUser, AppRoles.Admin);
         }
 
         if (!await context.Productions.AnyAsync())

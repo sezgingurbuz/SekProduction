@@ -12,9 +12,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Hesaplar yönetim panelinden açıldığı için e-posta doğrulaması aranmaz.
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+builder.Services.AddDefaultIdentity<SekProduction.Web.Models.AppUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddClaimsPrincipalFactory<SekProduction.Web.Services.AppUserClaimsPrincipalFactory>();
 
 // Portal tamamen kapalıdır: [AllowAnonymous] taşımayan her sayfa giriş ister.
 builder.Services.AddAuthorization(options =>
@@ -61,7 +62,12 @@ string[] disabledIdentityPages =
     "/Identity/Account/ForgotPassword",
     "/Identity/Account/ForgotPasswordConfirmation",
     "/Identity/Account/ResetPassword",
-    "/Identity/Account/ResetPasswordConfirmation"
+    "/Identity/Account/ResetPasswordConfirmation",
+    // E-posta ve hesap silme yönetici yetkisindedir.
+    "/Identity/Account/Manage/Email",
+    "/Identity/Account/Manage/PersonalData",
+    "/Identity/Account/Manage/DeletePersonalData",
+    "/Identity/Account/Manage/ExternalLogins"
 };
 app.Use(async (context, next) =>
 {
