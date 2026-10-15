@@ -12,7 +12,7 @@ namespace SekProduction.Web.Controllers;
 // Çalışan portalının giriş sayfası.
 public class HomeController : Controller
 {
-    private const int UpcomingEventLimit = 15;
+    private const int UpcomingEventLimit = 500;
     private const int UnreadAnnouncementLimit = 5;
 
     private readonly ApplicationDbContext _context;
@@ -35,7 +35,6 @@ public class HomeController : Controller
     public async Task<IActionResult> Index()
     {
         var today = DateTime.Today;
-        var tomorrow = today.AddDays(1);
         var monthStart = new DateTime(today.Year, today.Month, 1);
         var monthEnd = monthStart.AddMonths(1);
 
@@ -53,20 +52,23 @@ public class HomeController : Controller
 
         return View(new PortalDashboardViewModel
         {
-            TodayEvents = await ready
-                .Where(e => e.EventDate >= today && e.EventDate < tomorrow)
-                .OrderBy(e => e.EventDate)
-                .ToListAsync(),
             UpcomingEvents = await ready
-                .Where(e => e.EventDate >= tomorrow)
+                .Where(e => e.EventDate >= today)
                 .OrderBy(e => e.EventDate)
                 .Take(UpcomingEventLimit)
                 .ToListAsync(),
-            MonthEventCount = await ready.CountAsync(e => e.EventDate >= monthStart && e.EventDate < monthEnd),
+            MonthEvents = await ready
+                .Where(e => e.EventDate >= monthStart && e.EventDate < monthEnd)
+                .OrderBy(e => e.EventDate)
+                .ToListAsync(),
             UnreadAnnouncements = await UnreadAnnouncementsAsync(),
             AssignedProductionTitles = allowed is null
                 ? new List<string>()
-                : await _context.Productions.Where(p => allowed.Contains(p.Id)).OrderBy(p => p.Title).Select(p => p.Title).ToListAsync(),
+                : await _context.Productions
+                    .Where(p => allowed.Contains(p.Id))
+                    .OrderBy(p => p.Title)
+                    .Select(p => p.Title)
+                    .ToListAsync(),
             ProductionColors = await _calendar.ProductionColorsAsync()
         });
     }

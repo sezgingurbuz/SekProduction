@@ -1,6 +1,29 @@
 @model PortalDashboardViewModel
 @{
     ViewData["Title"] = "Panelim";
+    var todayEvents = Model.TodayEvents;
+    var nextEvents = Model.NextEvents;
+
+    // Haritaya giden veri: çalışanın görebildiği etkinlikler (yapım kısıtı zaten uygulanmış gelir).
+    object MapItem(EventSchedule s) => new
+    {
+        city = s.City,
+        day = s.EventDate.ToString("d MMM ddd"),
+        time = s.EventDate.ToString("HH:mm"),
+        production = s.Production?.Title,
+        color = Model.ColorFor(s.ProductionId),
+        venue = s.Venue,
+        url = Url.Action("Details", "Events", new { id = s.Id })
+    };
+    var mapData = new
+    {
+        month = Model.MonthEvents.Select(MapItem),
+        upcoming = Model.UpcomingEvents.Select(MapItem)
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/tour-map.css" asp-append-version="true" />
 }
 
 <div class="page-header">
@@ -53,7 +76,7 @@
         <div class="card stat-card h-100">
             <div class="card-body">
                 <h6 class="text-muted text-uppercase small mb-1">Bugün</h6>
-                <p class="display-6 mb-0">@Model.TodayEvents.Count</p>
+                <p class="display-6 mb-0">@todayEvents.Count</p>
                 <span class="text-muted small">etkinlik</span>
             </div>
         </div>
@@ -78,11 +101,46 @@
     </div>
 </div>
 
-@if (Model.TodayEvents.Any())
+<div class="card mb-4" data-tour-map data-src="@Url.Content("~/img/turkiye.svg")"
+     data-map-unit="etkinlik" data-map-storage-key="portalMapHidden" style="--map-c: #0d6efd">
+    <div class="card-body">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <h2 class="h6 text-uppercase text-muted mb-0 me-auto">
+                Nerelerdeyiz <span class="text-lowercase fw-normal" data-map-summary></span>
+            </h2>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Harita dönemi" data-map-body>
+                <button type="button" class="btn btn-secondary" data-map-scope="month">@DateTime.Today.ToString("MMMM yyyy")</button>
+                <button type="button" class="btn btn-outline-secondary" data-map-scope="upcoming">Yaklaşan tümü</button>
+            </div>
+            <button type="button" class="btn btn-link btn-sm text-muted" data-map-toggle>Haritayı gizle</button>
+        </div>
+        <div data-map-body>
+            @if (!Model.UpcomingEvents.Any() && !Model.MonthEvents.Any())
+            {
+                <div class="empty-state">Size bağlı yapımlarda planlanmış etkinlik yok.</div>
+            }
+            else
+            {
+                <div class="tour-map" data-map-canvas>
+                    <div class="text-muted small p-4 text-center">Harita yükleniyor…</div>
+                </div>
+                <div class="tour-map-legend">
+                    <span><i class="tour-map-swatch" data-level="1"></i>1 etkinlik</span>
+                    <span><i class="tour-map-swatch" data-level="2"></i>2–3 etkinlik</span>
+                    <span><i class="tour-map-swatch" data-level="3"></i>4+ etkinlik</span>
+                    <span class="text-muted">İlin üzerine gelince etkinlikler görünür; tıklayınca kart sabitlenir ve etkinliğe gidebilirsiniz.</span>
+                </div>
+            }
+        </div>
+    </div>
+    <script type="application/json" data-map-data>@Json.Serialize(mapData)</script>
+</div>
+
+@if (todayEvents.Any())
 {
     <h2 class="h5">Bugün</h2>
     <div class="list-group mb-4">
-        @foreach (var item in Model.TodayEvents)
+        @foreach (var item in todayEvents)
         {
             <a class="list-group-item list-group-item-action event-row text-decoration-none" style="--c: @Model.ColorFor(item.ProductionId)" asp-controller="Events" asp-action="Details" asp-route-id="@item.Id">
                 <span class="event-row__date">@item.EventDate.ToString("HH:mm")</span>
@@ -94,10 +152,10 @@
 }
 
 <h2 class="h5">Yaklaşan Etkinlikler</h2>
-@if (Model.UpcomingEvents.Any())
+@if (nextEvents.Any())
 {
     <div class="list-group">
-        @foreach (var item in Model.UpcomingEvents)
+        @foreach (var item in nextEvents)
         {
             <a class="list-group-item list-group-item-action event-row text-decoration-none" style="--c: @Model.ColorFor(item.ProductionId)" asp-controller="Events" asp-action="Details" asp-route-id="@item.Id">
                 <span class="event-row__date">@item.EventDate.ToString("d MMMM ddd")</span>
@@ -111,4 +169,8 @@
 else
 {
     <div class="empty-state">Planlanmış yaklaşan etkinlik yok.</div>
+}
+
+@section Scripts {
+    <script src="~/js/tour-map.js" asp-append-version="true"></script>
 }

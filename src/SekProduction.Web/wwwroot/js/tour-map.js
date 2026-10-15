@@ -1,5 +1,10 @@
-// Turne Takvimi / Etkinlik Günleri: seans olan illeri Türkiye haritasında boyar,
-// ilin üzerine gelince o ildeki seansları küçük bir kartta gösterir.
+// Türkiye haritası: etkinlik olan illeri boyar, ilin üzerine gelince o ildeki
+// etkinlikleri küçük bir kartta gösterir. Hem yönetim panelindeki turne tahtası
+// hem de ekip panelindeki "Nerelerdeyiz" kartı bu dosyayı kullanır.
+//
+// Beklenen işaretleme: [data-tour-map] kökü, içinde [data-map-canvas] ve
+// [data-map-data] (JSON). Özet, dönem düğmeleri, gizle düğmesi ve eşleşmeyen
+// şehir kutusu isteğe bağlıdır; yoksa o özellik sessizce atlanır.
 (function () {
     var root = document.querySelector('[data-tour-map]');
     if (!root) {
@@ -13,7 +18,8 @@
     var toggle = root.querySelector('[data-map-toggle]');
     var scopeButtons = root.querySelectorAll('[data-map-scope]');
     var data = JSON.parse(root.querySelector('[data-map-data]').textContent);
-    var scope = 'month';
+    var unit = root.dataset.mapUnit || 'seans';
+    var scope = root.dataset.mapScope || 'month';
     var byPlate = {};
     var pinned = null;
     var tooltip = document.createElement('div');
@@ -21,14 +27,16 @@
     tooltip.hidden = true;
 
     // Harita gizle/göster tercihi tarayıcıda hatırlanır.
-    var hiddenKey = 'tourMapHidden';
+    var hiddenKey = root.dataset.mapStorageKey || 'tourMapHidden';
     var setHidden = function (hidden) {
         bodies.forEach(function (el) { el.hidden = hidden; });
         toggle.textContent = hidden ? 'Haritayı göster' : 'Haritayı gizle';
         try { localStorage.setItem(hiddenKey, hidden ? '1' : '0'); } catch (e) { /* yok say */ }
     };
-    toggle.addEventListener('click', function () { setHidden(!bodies[0].hidden); });
-    try { if (localStorage.getItem(hiddenKey) === '1') { setHidden(true); } } catch (e) { /* yok say */ }
+    if (toggle && bodies.length) {
+        toggle.addEventListener('click', function () { setHidden(!bodies[0].hidden); });
+        try { if (localStorage.getItem(hiddenKey) === '1') { setHidden(true); } } catch (e) { /* yok say */ }
+    }
 
     // "İzmir", "izmir", "IZMIR", "Izmir" aynı ile eşleşsin diye Türkçe harfler sadeleştirilir.
     var normalize = function (text) {
@@ -94,48 +102,55 @@
             group.setAttribute('data-level', level);
             if (count) {
                 group.setAttribute('tabindex', '0');
-                group.setAttribute('aria-label', provinceName(group) + ': ' + count + ' seans');
+                group.setAttribute('aria-label', provinceName(group) + ': ' + count + ' ' + unit);
             } else {
                 group.removeAttribute('tabindex');
                 group.removeAttribute('aria-label');
             }
         });
 
-        var cityCount = Object.keys(byPlate).length;
-        var matchedCount = sessions.length - Object.keys(unmatched).reduce(function (sum, k) { return sum + unmatched[k]; }, 0);
-        summary.textContent = sessions.length ? '· ' + cityCount + ' ilde ' + matchedCount + ' seans' : '· seans yok';
+        if (summary) {
+            var cityCount = Object.keys(byPlate).length;
+            var matchedCount = sessions.length - Object.keys(unmatched).reduce(function (sum, k) { return sum + unmatched[k]; }, 0);
+            summary.textContent = sessions.length ? '· ' + cityCount + ' ilde ' + matchedCount + ' ' + unit : '· ' + unit + ' yok';
+        }
 
-        var names = Object.keys(unmatched);
-        unmatchedBox.hidden = names.length === 0;
-        unmatchedBox.innerHTML = names.length
-            ? '<strong>Haritada bulunamayan şehirler:</strong> '
-                + names.map(function (n) { return escapeHtml(n) + ' (' + unmatched[n] + ')'; }).join(', ')
-                + '. Şehri il adıyla yazarsanız (örn. "Kadıköy / İstanbul") haritada görünür.'
-            : '';
+        if (unmatchedBox) {
+            var names = Object.keys(unmatched);
+            unmatchedBox.hidden = names.length === 0;
+            unmatchedBox.innerHTML = names.length
+                ? '<strong>Haritada bulunamayan şehirler:</strong> '
+                    + names.map(function (n) { return escapeHtml(n) + ' (' + unmatched[n] + ')'; }).join(', ')
+                    + '. Şehri il adıyla yazarsanız (örn. "Kadıköy / İstanbul") haritada görünür.'
+                : '';
+        }
 
         hideTooltip(true);
+    };
+
+    // Bir etkinlik satırı. url verilmişse satır tıklanabilir olur.
+    var rowHtml = function (s) {
+        var inner = '<span class="tour-map-dot" style="--c:' + escapeHtml(s.color) + '"></span>'
+            + '<strong>' + escapeHtml(s.day) + ' ' + escapeHtml(s.time) + '</strong> '
+            + escapeHtml(s.production)
+            + (s.venue ? '<div class="text-muted">' + escapeHtml(s.venue) + '</div>' : '')
+            + (s.hasTicket === false ? '<div class="tour-chip__warn">bilet linki yok</div>' : '');
+
+        return '<li>' + (s.url ? '<a href="' + escapeHtml(s.url) + '">' + inner + '</a>' : inner) + '</li>';
     };
 
     var tooltipHtml = function (group) {
         var list = byPlate[group.dataset.plakakodu] || [];
         var name = provinceName(group);
         if (!list.length) {
-            return '<div class="tour-map-tooltip__title">' + escapeHtml(name) + '</div><div class="text-muted small">Seans yok</div>';
+            return '<div class="tour-map-tooltip__title">' + escapeHtml(name) + '</div><div class="text-muted small">' + unit.charAt(0).toUpperCase() + unit.slice(1) + ' yok</div>';
         }
         var max = 6;
-        var rows = list.slice(0, max).map(function (s) {
-            return '<li>'
-                + '<span class="tour-dot" style="--c:' + escapeHtml(s.color) + '"></span>'
-                + '<strong>' + escapeHtml(s.day) + ' ' + escapeHtml(s.time) + '</strong> '
-                + escapeHtml(s.production)
-                + (s.venue ? '<div class="text-muted">' + escapeHtml(s.venue) + '</div>' : '')
-                + (s.hasTicket ? '' : '<div class="tour-chip__warn">bilet linki yok</div>')
-                + '</li>';
-        }).join('');
+        var rows = list.slice(0, max).map(rowHtml).join('');
         return '<div class="tour-map-tooltip__title">' + escapeHtml(name)
-            + ' <span class="badge rounded-pill bg-light text-dark border">' + list.length + ' seans</span></div>'
+            + ' <span class="badge rounded-pill bg-light text-dark border">' + list.length + ' ' + unit + '</span></div>'
             + '<ul>' + rows + '</ul>'
-            + (list.length > max ? '<div class="text-muted small">+' + (list.length - max) + ' seans daha</div>' : '');
+            + (list.length > max ? '<div class="text-muted small">+' + (list.length - max) + ' ' + unit + ' daha</div>' : '');
     };
 
     var placeTooltip = function (clientX, clientY) {

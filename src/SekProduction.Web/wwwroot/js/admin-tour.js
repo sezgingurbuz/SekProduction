@@ -68,7 +68,7 @@
     document.querySelectorAll('#tourModal form, #tourDeleteForm, [data-tour-selection]').forEach(function (f) {
         f.addEventListener('submit', rememberScroll);
     });
-    // Harita gizleme tercihi (admin-tour-map.js) uygulandıktan sonra konum geri yüklenir.
+    // Harita gizleme tercihi (tour-map.js) uygulandıktan sonra konum geri yüklenir.
     document.addEventListener('DOMContentLoaded', restoreScroll);
 
     var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
