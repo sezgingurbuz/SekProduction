@@ -18,11 +18,15 @@ public class DashboardController : Controller
 
     public async Task<IActionResult> Index()
     {
+        var today = DateTime.Today;
+        var monthEnd = new DateTime(today.Year, today.Month, 1).AddMonths(1);
+
         ViewData["ProductionCount"] = await _context.Productions.CountAsync();
         ViewData["TeamMemberCount"] = await _context.TeamMembers.CountAsync();
-        ViewData["NewsPostCount"] = await _context.NewsPosts.CountAsync();
-        ViewData["ClientReferenceCount"] = await _context.ClientReferences.CountAsync();
-        ViewData["UnreadMessageCount"] = await _context.ContactMessages.CountAsync(m => !m.IsRead);
+        ViewData["UpcomingEventCount"] = await _context.EventSchedules.CountAsync(e => e.EventDate >= today);
+        ViewData["MonthEventCount"] = await _context.EventSchedules.CountAsync(e => e.EventDate >= today && e.EventDate < monthEnd);
+        // Takvime eklenip şehri henüz girilmemiş seanslar ekibe görünmez; yönetici bunları tamamlamalı.
+        ViewData["DraftEventCount"] = await _context.EventSchedules.CountAsync(e => e.EventDate >= today && (e.City == null || e.City == ""));
         return View();
     }
 }

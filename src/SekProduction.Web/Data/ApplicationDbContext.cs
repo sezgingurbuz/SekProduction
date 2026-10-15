@@ -16,19 +16,12 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<CastMember> CastMembers => Set<CastMember>();
     public DbSet<ProductionPhoto> ProductionPhotos => Set<ProductionPhoto>();
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
-    public DbSet<NewsPost> NewsPosts => Set<NewsPost>();
-    public DbSet<ClientReference> ClientReferences => Set<ClientReference>();
-    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
         builder.Entity<Production>()
-            .HasIndex(p => p.Slug)
-            .IsUnique();
-
-        builder.Entity<NewsPost>()
             .HasIndex(p => p.Slug)
             .IsUnique();
 

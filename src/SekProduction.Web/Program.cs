@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SekProduction.Web.Data;
@@ -10,9 +11,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+// Hesaplar yönetim panelinden açıldığı için e-posta doğrulaması aranmaz.
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Portal tamamen kapalıdır: [AllowAnonymous] taşımayan her sayfa giriş ister.
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<SekProduction.Web.Services.ImageStorage>();
 builder.Services.AddScoped<SekProduction.Web.Services.TourCalendarService>();
@@ -42,8 +51,32 @@ app.UseRequestLocalization(new Microsoft.AspNetCore.Builder.RequestLocalizationO
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+// Hesaplar yalnızca yönetim panelinden açılır; Identity'nin kendi kayıt sayfaları kapalıdır.
+string[] disabledIdentityPages =
+{
+    "/Identity/Account/Register",
+    "/Identity/Account/RegisterConfirmation",
+    "/Identity/Account/ResendEmailConfirmation",
+    "/Identity/Account/ExternalLogin",
+    "/Identity/Account/ForgotPassword",
+    "/Identity/Account/ForgotPasswordConfirmation",
+    "/Identity/Account/ResetPassword",
+    "/Identity/Account/ResetPasswordConfirmation"
+};
+app.Use(async (context, next) =>
+{
+    if (disabledIdentityPages.Any(page => context.Request.Path.StartsWithSegments(page, StringComparison.OrdinalIgnoreCase)))
+    {
+        context.Response.Redirect("/Identity/Account/Login");
+        return;
+    }
+
+    await next();
+});
+
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

@@ -79,15 +79,23 @@ public class TourCalendarService
             Sessions = sessions,
             UpcomingSessions = upcoming,
             Productions = productions,
-            ProductionColors = productions
-                .OrderBy(p => p.Id)
-                .Select((p, i) => (p.Id, Color: Palette[i % Palette.Length]))
-                .ToDictionary(x => x.Id, x => x.Color),
+            ProductionColors = ColorMap(productions.OrderBy(p => p.Id).Select(p => p.Id)),
             Cities = cities.OrderBy(c => c, TurkishComparer).ToList(),
             CitySuggestions = cities.Concat(TurkeyProvinces.Names).Distinct(TurkishComparer).OrderBy(c => c, TurkishComparer).ToList(),
             Venues = venues.OrderBy(v => v, TurkishComparer).ToList()
         };
     }
+
+    // Yapım renkleri takvim dışındaki listelerde de aynı olsun diye tek yerden üretilir.
+    public async Task<Dictionary<int, string>> ProductionColorsAsync()
+    {
+        var ids = await _context.Productions.OrderBy(p => p.Id).Select(p => p.Id).ToListAsync();
+        return ColorMap(ids);
+    }
+
+    private static Dictionary<int, string> ColorMap(IEnumerable<int> productionIdsByAge) => productionIdsByAge
+        .Select((id, index) => (id, Color: Palette[index % Palette.Length]))
+        .ToDictionary(x => x.id, x => x.Color);
 
     private IQueryable<EventSchedule> Filtered(TourFilter filter)
     {

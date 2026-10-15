@@ -1,105 +1,67 @@
-@model HomeViewModel
+@model PortalDashboardViewModel
 @{
-    ViewData["Title"] = "Anasayfa";
+    ViewData["Title"] = "Panelim";
 }
 
-<div class="p-5 mb-4 bg-dark text-white rounded-3">
-    <div class="container-fluid py-4">
-        <h1 class="display-5 fw-bold">Sek Production</h1>
-        <p class="col-md-8 fs-4">Müzik, prodüksiyon, konser organizasyonu ve sanatçı yönetimi alanlarında hizmet veriyoruz.</p>
-        <p class="col-md-8 fs-5">Bu sezon özellikle tiyatro sahnesindeyiz: sahnelediğimiz oyunların etkinlik tarihlerini ve bilet linklerini aşağıda bulabilirsiniz.</p>
-        <a asp-controller="Contact" asp-action="Index" class="btn btn-light btn-lg">Bizimle İletişime Geçin</a>
+<div class="page-header">
+    <div>
+        <h1>Merhaba@(string.IsNullOrEmpty(User.Identity?.Name) ? "" : ", " + User.Identity!.Name)</h1>
+        <div class="text-muted small">Yaklaşan etkinlikleriniz ve bu ayın programı.</div>
     </div>
 </div>
 
-<section class="mb-5">
-    <h2 class="mb-3">Bu Sezon Sahnede</h2>
-    @if (!Model.FeaturedProductions.Any())
-    {
-        <p class="text-muted">Henüz öne çıkan bir oyun eklenmedi.</p>
-    }
-    else
-    {
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            @foreach (var production in Model.FeaturedProductions)
-            {
-                var nextDate = production.EventSchedules
-                    .Where(e => e.IsReady && e.EventDate >= DateTime.UtcNow.Date)
-                    .OrderBy(e => e.EventDate)
-                    .FirstOrDefault();
-                <div class="col">
-                    <div class="card h-100">
-                        @if (!string.IsNullOrEmpty(production.CoverImageUrl))
-                        {
-                            <img src="@production.CoverImageUrl" class="card-img-top" alt="@production.Title" />
-                        }
-                        <div class="card-body">
-                            <h5 class="card-title">@production.Title</h5>
-                            <p class="card-text">@production.ShortDescription</p>
-                            @if (nextDate is not null)
-                            {
-                                <p class="text-muted small mb-0">
-                                    @nextDate.EventDate.ToString("dd MMMM yyyy, HH:mm")@(nextDate.City is null ? "" : $" · {nextDate.City}")
-                                </p>
-                            }
-                        </div>
-                        <div class="card-footer d-flex gap-2">
-                            <a asp-controller="Productions" asp-action="Details" asp-route-slug="@production.Slug" class="btn btn-sm btn-outline-dark">Detaylar</a>
-                            @if (nextDate is not null && !string.IsNullOrEmpty(nextDate.TicketUrl))
-                            {
-                                <a href="@nextDate.TicketUrl" target="_blank" rel="noopener" class="btn btn-sm btn-dark">Bilet Al</a>
-                            }
-                        </div>
-                    </div>
-                </div>
-            }
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase small mb-1">Bugün</h6>
+                <p class="display-6 mb-0">@Model.TodayEvents.Count</p>
+                <span class="text-muted small">etkinlik</span>
+            </div>
         </div>
-    }
-</section>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase small mb-1">@DateTime.Today.ToString("MMMM")</h6>
+                <p class="display-6 mb-0">@Model.MonthEventCount</p>
+                <span class="text-muted small">etkinlik</span>
+            </div>
+        </div>
+    </div>
+</div>
 
-@if (Model.ClientReferences.Any())
+@if (Model.TodayEvents.Any())
 {
-    <section class="mb-5">
-        <h2 class="mb-3">Referanslarımız</h2>
-        <div class="d-flex flex-wrap align-items-center gap-4">
-            @foreach (var reference in Model.ClientReferences)
-            {
-                if (!string.IsNullOrEmpty(reference.LogoUrl))
-                {
-                    <img src="@reference.LogoUrl" alt="@reference.ClientName" style="max-height:48px" title="@reference.ClientName" />
-                }
-                else
-                {
-                    <span class="badge bg-secondary">@reference.ClientName</span>
-                }
-            }
-        </div>
-    </section>
+    <h2 class="h5">Bugün</h2>
+    <div class="list-group mb-4">
+        @foreach (var item in Model.TodayEvents)
+        {
+            <div class="list-group-item event-row" style="--c: @Model.ColorFor(item.ProductionId)">
+                <span class="event-row__date">@item.EventDate.ToString("HH:mm")</span>
+                <strong>@item.Production?.Title</strong>
+                <span class="text-muted">@item.City@(string.IsNullOrWhiteSpace(item.Venue) ? "" : " · " + item.Venue)</span>
+            </div>
+        }
+    </div>
 }
 
-@if (Model.LatestNews.Any())
+<h2 class="h5">Yaklaşan Etkinlikler</h2>
+@if (Model.UpcomingEvents.Any())
 {
-    <section class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>Son Haberler</h2>
-            <a asp-controller="News" asp-action="Index">Tümünü Gör &rarr;</a>
-        </div>
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            @foreach (var post in Model.LatestNews)
-            {
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">@post.Title</h5>
-                            <p class="card-text">@post.Summary</p>
-                            <p class="text-muted small">@post.PublishedAt.ToString("dd.MM.yyyy")</p>
-                        </div>
-                        <div class="card-footer">
-                            <a asp-controller="News" asp-action="Details" asp-route-slug="@post.Slug" class="btn btn-sm btn-outline-dark">Devamını Oku</a>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    </section>
+    <div class="list-group">
+        @foreach (var item in Model.UpcomingEvents)
+        {
+            <div class="list-group-item event-row" style="--c: @Model.ColorFor(item.ProductionId)">
+                <span class="event-row__date">@item.EventDate.ToString("d MMMM ddd")</span>
+                <span class="text-muted">@item.EventDate.ToString("HH:mm")</span>
+                <strong>@item.Production?.Title</strong>
+                <span class="text-muted">@item.City@(string.IsNullOrWhiteSpace(item.Venue) ? "" : " · " + item.Venue)</span>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">Planlanmış yaklaşan etkinlik yok.</div>
 }

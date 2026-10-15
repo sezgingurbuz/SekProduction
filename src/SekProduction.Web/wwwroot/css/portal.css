@@ -1,0 +1,54 @@
+/* Ekip portalı (giriş yapan çalışanların gördüğü sayfalar) */
+.portal .page-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 2px solid #212529;
+    padding-bottom: .75rem;
+    margin-bottom: 1.5rem;
+}
+
+.portal .page-header h1 {
+    margin-bottom: .25rem;
+    font-size: 1.75rem;
+}
+
+/* Yapım rengi: takvimde ve listelerde aynı yapım aynı renkle görünür */
+.portal .event-dot {
+    display: inline-block;
+    width: .65rem;
+    height: .65rem;
+    border-radius: 50%;
+    background: var(--c, #6c757d);
+    margin-right: .4rem;
+    vertical-align: baseline;
+}
+
+.portal .event-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem 1rem;
+    align-items: baseline;
+    padding: .65rem .9rem;
+    border-left: 4px solid var(--c, #6c757d);
+}
+
+.portal .event-row__date {
+    min-width: 8.5rem;
+    font-weight: 600;
+}
+
+.portal .stat-card .display-6 {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.portal .empty-state {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: #6c757d;
+    border: 1px dashed #ced4da;
+    border-radius: .5rem;
+}

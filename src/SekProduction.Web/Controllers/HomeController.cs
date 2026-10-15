@@ -1,49 +1,56 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SekProduction.Web.Data;
 using SekProduction.Web.Models;
+using SekProduction.Web.Services;
 
 namespace SekProduction.Web.Controllers;
 
+// Çalışan portalının giriş sayfası.
 public class HomeController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private const int UpcomingEventLimit = 15;
 
-    public HomeController(ApplicationDbContext context)
+    private readonly ApplicationDbContext _context;
+    private readonly TourCalendarService _calendar;
+
+    public HomeController(ApplicationDbContext context, TourCalendarService calendar)
     {
         _context = context;
+        _calendar = calendar;
     }
 
     public async Task<IActionResult> Index()
     {
-        var viewModel = new HomeViewModel
+        var today = DateTime.Today;
+        var tomorrow = today.AddDays(1);
+        var monthStart = new DateTime(today.Year, today.Month, 1);
+        var monthEnd = monthStart.AddMonths(1);
+
+        // Şehri girilmemiş seanslar henüz taslaktır; ekibe gösterilmez.
+        var ready = _context.EventSchedules
+            .Include(e => e.Production)
+            .Where(e => e.City != null && e.City != "");
+
+        return View(new PortalDashboardViewModel
         {
-            FeaturedProductions = await _context.Productions
-                .Where(p => p.IsPublished && p.IsFeatured)
-                .Include(p => p.EventSchedules)
-                .OrderBy(p => p.DisplayOrder)
-                .Take(6)
+            TodayEvents = await ready
+                .Where(e => e.EventDate >= today && e.EventDate < tomorrow)
+                .OrderBy(e => e.EventDate)
                 .ToListAsync(),
-            LatestNews = await _context.NewsPosts
-                .Where(n => n.IsPublished)
-                .OrderByDescending(n => n.PublishedAt)
-                .Take(3)
+            UpcomingEvents = await ready
+                .Where(e => e.EventDate >= tomorrow)
+                .OrderBy(e => e.EventDate)
+                .Take(UpcomingEventLimit)
                 .ToListAsync(),
-            ClientReferences = await _context.ClientReferences
-                .Where(c => c.IsPublished)
-                .OrderBy(c => c.DisplayOrder)
-                .ToListAsync()
-        };
-
-        return View(viewModel);
+            MonthEventCount = await ready.CountAsync(e => e.EventDate >= monthStart && e.EventDate < monthEnd),
+            ProductionColors = await _calendar.ProductionColorsAsync()
+        });
     }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
+    [AllowAnonymous]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

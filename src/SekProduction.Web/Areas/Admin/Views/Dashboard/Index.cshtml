@@ -7,7 +7,7 @@
 
 <div class="row g-3 mt-2">
     <div class="col-sm-6 col-lg-4">
-        <div class="card">
+        <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">Yapımlar</h5>
                 <p class="card-text display-6">@ViewData["ProductionCount"]</p>
@@ -16,38 +16,31 @@
         </div>
     </div>
     <div class="col-sm-6 col-lg-4">
-        <div class="card">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Yaklaşan Etkinlikler</h5>
+                <p class="card-text display-6">@ViewData["UpcomingEventCount"]</p>
+                <div class="text-muted small mb-2">Bu ay: @ViewData["MonthEventCount"]</div>
+                <a asp-area="Admin" asp-controller="Tour" asp-action="Index" class="btn btn-outline-primary btn-sm">Takvim</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card h-100 @((int)(ViewData["DraftEventCount"] ?? 0) > 0 ? "border-warning" : "")">
+            <div class="card-body">
+                <h5 class="card-title">Eksik Bilgili Seanslar</h5>
+                <p class="card-text display-6">@ViewData["DraftEventCount"]</p>
+                <div class="text-muted small mb-2">Şehri girilmeyen seanslar ekibe görünmez.</div>
+                <a asp-area="Admin" asp-controller="Tour" asp-action="Index" class="btn btn-outline-warning btn-sm">Tamamla</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">Ekip Üyeleri</h5>
                 <p class="card-text display-6">@ViewData["TeamMemberCount"]</p>
                 <a asp-area="Admin" asp-controller="TeamMembers" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Haberler</h5>
-                <p class="card-text display-6">@ViewData["NewsPostCount"]</p>
-                <a asp-area="Admin" asp-controller="NewsPosts" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Referanslar</h5>
-                <p class="card-text display-6">@ViewData["ClientReferenceCount"]</p>
-                <a asp-area="Admin" asp-controller="ClientReferences" asp-action="Index" class="btn btn-outline-primary btn-sm">Yönet</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-4">
-        <div class="card border-warning">
-            <div class="card-body">
-                <h5 class="card-title">Okunmamış Mesajlar</h5>
-                <p class="card-text display-6">@ViewData["UnreadMessageCount"]</p>
-                <a asp-area="Admin" asp-controller="ContactMessages" asp-action="Index" class="btn btn-outline-warning btn-sm">İncele</a>
             </div>
         </div>
     </div>

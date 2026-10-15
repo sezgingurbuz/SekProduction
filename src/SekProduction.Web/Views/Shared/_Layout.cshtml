@@ -1,45 +1,47 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Sek Production</title>
+    <title>@ViewData["Title"] - Sek Production Ekip Portalı</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/SekProduction.Web.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/portal.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="@ViewData["BodyClass"]">
+<body class="portal">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Sek Production</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        @foreach (var category in new[] { ProductionCategory.SekProduction, ProductionCategory.ChaplinSanat, ProductionCategory.ChaplinCocukSanat })
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-light" asp-area="" asp-controller="Productions" asp-action="Category" asp-route-categorySlug="@category.GetSlug()">@category.GetDisplayName()</a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="News" asp-action="Index">Haberler</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Contact" asp-action="Index">İletişim</a>
-                        </li>
-                    </ul>
-                    <partial name="_LoginPartial" />
-                </div>
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Sek Production <span class="text-secondary">&middot;</span> Ekip Portalı</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-label="Menüyü aç/kapat">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                        <ul class="navbar-nav flex-grow-1">
+                            <li class="nav-item"><a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Panelim</a></li>
+                            @if (User.IsInRole(SekProduction.Web.Data.SeedData.AdminRole))
+                            {
+                                <li class="nav-item"><a class="nav-link text-warning" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Yönetim Paneli</a></li>
+                            }
+                        </ul>
+                        <partial name="_LoginPartial" />
+                    </div>
+                }
             </div>
         </nav>
     </header>
-    @await RenderSectionAsync("Hero", required: false)
-    <div class="container">
+    <div class="@(ViewData["ContainerClass"] ?? "container") mt-4">
+        @if (TempData["StatusMessage"] is string statusMessage)
+        {
+            <div class="alert alert-info">@statusMessage</div>
+        }
+        @if (TempData["StatusError"] is string statusError)
+        {
+            <div class="alert alert-danger">@statusError</div>
+        }
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
@@ -47,7 +49,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; @DateTime.Now.Year - Sek Production
+            &copy; @DateTime.Now.Year - Sek Production &middot; şirket içi kullanım
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
