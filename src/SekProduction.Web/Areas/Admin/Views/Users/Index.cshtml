@@ -53,7 +53,7 @@ else
                     <td class="text-end">
                         <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-dark">Düzenle</a>
                         <form asp-action="Delete" asp-route-id="@user.Id" method="post" class="d-inline"
-                              onsubmit="return confirm('Bu kullanıcı hesabı silinsin mi?');">
+                              data-confirm="Bu kullanıcı hesabı silinsin mi?">
                             <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
                         </form>
                     </td>

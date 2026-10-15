@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SekProduction.Web.Data;
@@ -11,11 +12,13 @@ public class EventsController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly TourCalendarService _calendar;
+    private readonly UserManager<AppUser> _userManager;
 
-    public EventsController(ApplicationDbContext context, TourCalendarService calendar)
+    public EventsController(ApplicationDbContext context, TourCalendarService calendar, UserManager<AppUser> userManager)
     {
         _context = context;
         _calendar = calendar;
+        _userManager = userManager;
     }
 
     // GET: /Events/Details/5
@@ -45,8 +48,21 @@ public class EventsController : Controller
             Event = current,
             SameDayEvents = sameDay,
             Hotels = await HotelsInCityAsync(current.City!),
+            TeamNotes = await NotesAsync(current.Id, EventNoteScope.Team),
+            MyNotes = await NotesAsync(current.Id, EventNoteScope.Private, _userManager.GetUserId(User)),
             ProductionColors = await _calendar.ProductionColorsAsync()
         });
+    }
+
+    private async Task<List<EventNote>> NotesAsync(int eventScheduleId, EventNoteScope scope, string? authorId = null)
+    {
+        var query = _context.EventNotes.Where(n => n.EventScheduleId == eventScheduleId && n.Scope == scope);
+        if (authorId is not null)
+        {
+            query = query.Where(n => n.AuthorId == authorId);
+        }
+
+        return await query.OrderByDescending(n => n.CreatedAt).ToListAsync();
     }
 
     private async Task<List<Hotel>> HotelsInCityAsync(string city)

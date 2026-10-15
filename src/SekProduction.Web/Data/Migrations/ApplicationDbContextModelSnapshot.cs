@@ -269,6 +269,48 @@ namespace SekProduction.Web.Data.Migrations
                     b.ToTable("CastMembers");
                 });
 
+            modelBuilder.Entity("SekProduction.Web.Models.EventNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EventScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("EventScheduleId", "Scope");
+
+                    b.ToTable("EventNotes");
+                });
+
             modelBuilder.Entity("SekProduction.Web.Models.EventSchedule", b =>
                 {
                     b.Property<int>("Id")
@@ -583,6 +625,24 @@ namespace SekProduction.Web.Data.Migrations
                     b.Navigation("Production");
                 });
 
+            modelBuilder.Entity("SekProduction.Web.Models.EventNote", b =>
+                {
+                    b.HasOne("SekProduction.Web.Models.AppUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SekProduction.Web.Models.EventSchedule", "EventSchedule")
+                        .WithMany("Notes")
+                        .HasForeignKey("EventScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("EventSchedule");
+                });
+
             modelBuilder.Entity("SekProduction.Web.Models.EventSchedule", b =>
                 {
                     b.HasOne("SekProduction.Web.Models.Production", "Production")
@@ -603,6 +663,11 @@ namespace SekProduction.Web.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Production");
+                });
+
+            modelBuilder.Entity("SekProduction.Web.Models.EventSchedule", b =>
+                {
+                    b.Navigation("Notes");
                 });
 
             modelBuilder.Entity("SekProduction.Web.Models.Production", b =>

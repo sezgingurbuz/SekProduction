@@ -33,6 +33,8 @@ public class EventSchedule
     public int DisplayOrder { get; set; }
 
     // Takvimden sadece günü seçilip eklenen seanslar şehri girilene kadar taslaktır ve sitede gösterilmez.
+    public ICollection<EventNote> Notes { get; set; } = new List<EventNote>();
+
     [NotMapped]
     public bool IsReady => !string.IsNullOrWhiteSpace(City);
 }

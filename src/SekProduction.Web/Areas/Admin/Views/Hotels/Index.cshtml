@@ -111,7 +111,7 @@ else
                     <td class="text-end">
                         <a asp-action="Edit" asp-route-id="@hotel.Id" class="btn btn-sm btn-outline-dark">Düzenle</a>
                         <form asp-action="Delete" asp-route-id="@hotel.Id" method="post" class="d-inline"
-                              onsubmit="return confirm('Bu otel kaydı silinsin mi?');">
+                              data-confirm="Bu otel kaydı silinsin mi?">
                             <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
                         </form>
                     </td>

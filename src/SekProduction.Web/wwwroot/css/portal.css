@@ -149,3 +149,34 @@
 .portal .detail-grid dd {
     margin-bottom: .75rem;
 }
+
+/* Etkinlik notları */
+.portal .note {
+    border-left: 3px solid #adb5bd;
+    background: #f8f9fa;
+    border-radius: .2rem;
+    padding: .5rem .7rem;
+    margin-bottom: .5rem;
+}
+
+.portal .note--team {
+    border-left-color: #0d6efd;
+}
+
+.portal .note--private {
+    border-left-color: #6f42c1;
+}
+
+.portal .note__body {
+    white-space: pre-line;
+}
+
+.portal .note__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: baseline;
+    margin-top: .35rem;
+    font-size: .78rem;
+    color: #6c757d;
+}

@@ -17,6 +17,7 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<ProductionPhoto> ProductionPhotos => Set<ProductionPhoto>();
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
     public DbSet<Hotel> Hotels => Set<Hotel>();
+    public DbSet<EventNote> EventNotes => Set<EventNote>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -37,6 +38,21 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
             .WithMany(p => p.CastMembers)
             .HasForeignKey(c => c.ProductionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<EventNote>(entity =>
+        {
+            entity.HasOne(n => n.EventSchedule)
+                .WithMany(e => e.Notes)
+                .HasForeignKey(n => n.EventScheduleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(n => n.Author)
+                .WithMany()
+                .HasForeignKey(n => n.AuthorId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(n => new { n.EventScheduleId, n.Scope });
+        });
 
         builder.Entity<Hotel>()
             .HasIndex(h => new { h.City, h.Name });

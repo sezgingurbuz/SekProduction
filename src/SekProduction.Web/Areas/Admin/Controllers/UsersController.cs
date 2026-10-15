@@ -13,10 +13,12 @@ namespace SekProduction.Web.Areas.Admin.Controllers;
 public class UsersController : Controller
 {
     private readonly UserManager<AppUser> _userManager;
+    private readonly ApplicationDbContext _context;
 
-    public UsersController(UserManager<AppUser> userManager)
+    public UsersController(UserManager<AppUser> userManager, ApplicationDbContext context)
     {
         _userManager = userManager;
+        _context = context;
     }
 
     // GET: Admin/Users
@@ -185,6 +187,17 @@ public class UsersController : Controller
         {
             TempData["StatusError"] = "Sistemdeki son yönetici hesabı silinemez.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // Kişisel notlar yalnızca sahibini ilgilendirir, hesapla birlikte silinir.
+        // Ekip notları kayıtta kalır; yazar bağlantısı boşalır, adı korunur.
+        var privateNotes = await _context.EventNotes
+            .Where(n => n.AuthorId == user.Id && n.Scope == EventNoteScope.Private)
+            .ToListAsync();
+        if (privateNotes.Count > 0)
+        {
+            _context.EventNotes.RemoveRange(privateNotes);
+            await _context.SaveChangesAsync();
         }
 
         var deleted = await _userManager.DeleteAsync(user);
