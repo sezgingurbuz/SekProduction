@@ -23,7 +23,8 @@ public class TourCalendarService
         _context = context;
     }
 
-    public async Task<TourCalendarViewModel> BuildAsync(int? year, int? month, TourFilter filter, Production? fixedProduction = null)
+    // readyOnly: şehri girilmemiş taslak seanslar ekibe gösterilmez.
+    public async Task<TourCalendarViewModel> BuildAsync(int? year, int? month, TourFilter filter, Production? fixedProduction = null, bool readyOnly = false)
     {
         if (fixedProduction is not null)
         {
@@ -47,13 +48,13 @@ public class TourCalendarService
             .ThenBy(p => p.Title)
             .ToListAsync();
 
-        var sessions = await Filtered(filter)
+        var sessions = await Filtered(filter, readyOnly)
             .Where(e => e.EventDate >= gridStart && e.EventDate < gridEnd)
             .OrderBy(e => e.EventDate)
             .ToListAsync();
 
         // Haritanın "Yaklaşan tümü" görünümü ve yapım sayfasının yan paneli için
-        var upcoming = await Filtered(filter)
+        var upcoming = await Filtered(filter, readyOnly)
             .Where(e => e.EventDate >= today)
             .OrderBy(e => e.EventDate)
             .ToListAsync();
@@ -97,9 +98,14 @@ public class TourCalendarService
         .Select((id, index) => (id, Color: Palette[index % Palette.Length]))
         .ToDictionary(x => x.id, x => x.Color);
 
-    private IQueryable<EventSchedule> Filtered(TourFilter filter)
+    private IQueryable<EventSchedule> Filtered(TourFilter filter, bool readyOnly)
     {
         var query = _context.EventSchedules.Include(e => e.Production).AsQueryable();
+
+        if (readyOnly)
+        {
+            query = query.Where(e => e.City != null && e.City != "");
+        }
 
         if (filter.Category is not null)
         {

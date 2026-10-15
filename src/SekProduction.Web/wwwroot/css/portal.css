@@ -52,3 +52,100 @@
     border: 1px dashed #ced4da;
     border-radius: .5rem;
 }
+
+/* Aylık takvim (salt okunur) */
+.portal .calendar-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: end;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.portal .calendar-grid {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.portal .calendar-grid th {
+    padding: .5rem;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #6c757d;
+    border-bottom: 2px solid #dee2e6;
+    text-align: left;
+}
+
+.portal .calendar-grid td {
+    border: 1px solid #e9ecef;
+    vertical-align: top;
+    height: 7.5rem;
+    padding: .35rem;
+}
+
+.portal .calendar-grid td.is-outside {
+    background: #f8f9fa;
+}
+
+.portal .calendar-grid td.is-today {
+    box-shadow: inset 0 0 0 2px #0d6efd;
+}
+
+.portal .calendar-day__number {
+    font-size: .85rem;
+    font-weight: 600;
+    color: #495057;
+    display: block;
+    margin-bottom: .25rem;
+}
+
+.portal .calendar-grid td.is-outside .calendar-day__number {
+    color: #adb5bd;
+}
+
+.portal .calendar-event {
+    display: block;
+    text-decoration: none;
+    color: #212529;
+    background: #f8f9fa;
+    border-left: 3px solid var(--c, #6c757d);
+    border-radius: .2rem;
+    padding: .2rem .35rem;
+    margin-bottom: .2rem;
+    font-size: .78rem;
+    line-height: 1.25;
+}
+
+.portal .calendar-event:hover {
+    background: #eef1f4;
+}
+
+.portal .calendar-event__time {
+    font-weight: 600;
+    margin-right: .25rem;
+}
+
+.portal .calendar-event__city {
+    display: block;
+    color: #6c757d;
+}
+
+.portal .calendar-conflict {
+    color: #b02a37;
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+/* Etkinlik detayı */
+.portal .detail-grid dt {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.portal .detail-grid dd {
+    margin-bottom: .75rem;
+}

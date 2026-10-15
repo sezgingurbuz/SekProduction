@@ -1,0 +1,113 @@
+@model EventDetailsViewModel
+@{
+    var item = Model.Event;
+    var production = item.Production;
+    ViewData["Title"] = $"{production?.Title} · {item.EventDate:d MMMM yyyy}";
+}
+
+<div class="page-header">
+    <div>
+        <a asp-controller="Calendar" asp-action="Index" asp-route-year="@item.EventDate.Year" asp-route-month="@item.EventDate.Month"
+           class="text-decoration-none small">&larr; Takvim</a>
+        <h1><span class="event-dot" style="--c: @Model.Color"></span>@production?.Title</h1>
+        <div class="text-muted">
+            @item.EventDate.ToString("d MMMM yyyy, dddd · HH:mm") &middot; @item.City@(string.IsNullOrWhiteSpace(item.Venue) ? "" : " · " + item.Venue)
+        </div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(item.TicketUrl))
+    {
+        <a href="@item.TicketUrl" target="_blank" rel="noopener" class="btn btn-outline-dark">Bilet Sayfası ↗</a>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase text-muted">Etkinlik</h2>
+                <dl class="detail-grid row mb-0">
+                    <dt class="col-sm-4">Tarih ve saat</dt>
+                    <dd class="col-sm-8">@item.EventDate.ToString("d MMMM yyyy, dddd · HH:mm")</dd>
+
+                    <dt class="col-sm-4">Şehir</dt>
+                    <dd class="col-sm-8">@item.City</dd>
+
+                    <dt class="col-sm-4">Salon</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(item.Venue) ? "—" : item.Venue)</dd>
+
+                    <dt class="col-sm-4">Menü</dt>
+                    <dd class="col-sm-8">@(production?.Category.GetDisplayName() ?? "—")</dd>
+
+                    @if (production?.DurationMinutes is not null || production?.ActCount is not null)
+                    {
+                        <dt class="col-sm-4">Süre</dt>
+                        <dd class="col-sm-8">
+                            @(production.DurationText ?? "—")
+                            @if (production.ActCount is not null)
+                            {
+                                <span class="text-muted">· @production.ActCount perde</span>
+                            }
+                        </dd>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(production?.AgeLimit))
+                    {
+                        <dt class="col-sm-4">Yaş sınırı</dt>
+                        <dd class="col-sm-8">@production.AgeLimit</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(production?.Credits))
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-muted">Künye</h2>
+                    <div style="white-space: pre-line">@production.Credits</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-5">
+        @if (production?.CastMembers.Any() == true)
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-muted">Oyuncular</h2>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var cast in production.CastMembers.OrderBy(c => c.DisplayOrder).ThenBy(c => c.FullName))
+                        {
+                            <li class="mb-1">
+                                <strong>@cast.FullName</strong>
+                                @if (!string.IsNullOrWhiteSpace(cast.RoleName))
+                                {
+                                    <span class="text-muted">· @cast.RoleName</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+
+        @if (Model.SameDayEvents.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-muted">Aynı gün diğer etkinlikler</h2>
+                    @foreach (var other in Model.SameDayEvents)
+                    {
+                        <a class="d-block text-decoration-none event-row px-0" style="--c: @Model.ColorFor(other.ProductionId)"
+                           asp-action="Details" asp-route-id="@other.Id">
+                            <span class="event-row__date">@other.EventDate.ToString("HH:mm")</span>
+                            <strong>@other.Production?.Title</strong>
+                            <span class="text-muted">@other.City</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

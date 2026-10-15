@@ -37,11 +37,11 @@
     <div class="list-group mb-4">
         @foreach (var item in Model.TodayEvents)
         {
-            <div class="list-group-item event-row" style="--c: @Model.ColorFor(item.ProductionId)">
+            <a class="list-group-item list-group-item-action event-row text-decoration-none" style="--c: @Model.ColorFor(item.ProductionId)" asp-controller="Events" asp-action="Details" asp-route-id="@item.Id">
                 <span class="event-row__date">@item.EventDate.ToString("HH:mm")</span>
                 <strong>@item.Production?.Title</strong>
                 <span class="text-muted">@item.City@(string.IsNullOrWhiteSpace(item.Venue) ? "" : " · " + item.Venue)</span>
-            </div>
+            </a>
         }
     </div>
 }
@@ -52,12 +52,12 @@
     <div class="list-group">
         @foreach (var item in Model.UpcomingEvents)
         {
-            <div class="list-group-item event-row" style="--c: @Model.ColorFor(item.ProductionId)">
+            <a class="list-group-item list-group-item-action event-row text-decoration-none" style="--c: @Model.ColorFor(item.ProductionId)" asp-controller="Events" asp-action="Details" asp-route-id="@item.Id">
                 <span class="event-row__date">@item.EventDate.ToString("d MMMM ddd")</span>
                 <span class="text-muted">@item.EventDate.ToString("HH:mm")</span>
                 <strong>@item.Production?.Title</strong>
                 <span class="text-muted">@item.City@(string.IsNullOrWhiteSpace(item.Venue) ? "" : " · " + item.Venue)</span>
-            </div>
+            </a>
         }
     </div>
 }

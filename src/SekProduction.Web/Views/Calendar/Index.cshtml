@@ -1,0 +1,110 @@
+@model TourCalendarViewModel
+@{
+    ViewData["Title"] = "Takvim";
+    ViewData["ContainerClass"] = "container-xxl";
+    var dayNames = new[] { "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar" };
+    var today = DateTime.Today;
+}
+
+<div class="page-header">
+    <div>
+        <h1>Takvim</h1>
+        <div class="text-muted small">Hangi gün hangi etkinliğin olduğunu görün; ayrıntılar için etkinliğe tıklayın.</div>
+    </div>
+</div>
+
+<div class="calendar-toolbar">
+    <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-sm btn-outline-secondary"
+           asp-action="Index" asp-route-year="@Model.PreviousMonth.Year" asp-route-month="@Model.PreviousMonth.Month"
+           asp-route-productionId="@Model.Filter.ProductionId" asp-route-city="@Model.Filter.City">&larr;</a>
+        <h2 class="h5 mb-0 mx-2">@Model.Month.ToString("MMMM yyyy")</h2>
+        <a class="btn btn-sm btn-outline-secondary"
+           asp-action="Index" asp-route-year="@Model.NextMonth.Year" asp-route-month="@Model.NextMonth.Month"
+           asp-route-productionId="@Model.Filter.ProductionId" asp-route-city="@Model.Filter.City">&rarr;</a>
+        <a class="btn btn-sm btn-outline-dark ms-2"
+           asp-action="Index" asp-route-productionId="@Model.Filter.ProductionId" asp-route-city="@Model.Filter.City">Bugün</a>
+    </div>
+
+    <form asp-action="Index" method="get" class="d-flex flex-wrap gap-2 align-items-end">
+        <input type="hidden" name="year" value="@Model.Month.Year" />
+        <input type="hidden" name="month" value="@Model.Month.Month" />
+        <div>
+            <label class="form-label small mb-1" for="productionId">Yapım</label>
+            <select id="productionId" name="productionId" class="form-select form-select-sm">
+                <option value="">Tümü</option>
+                @foreach (var production in Model.Productions)
+                {
+                    <option value="@production.Id" selected="@(Model.Filter.ProductionId == production.Id)">@production.Title</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label class="form-label small mb-1" for="city">Şehir</label>
+            <select id="city" name="city" class="form-select form-select-sm">
+                <option value="">Tümü</option>
+                @foreach (var city in Model.Cities)
+                {
+                    <option value="@city" selected="@(Model.Filter.City == city)">@city</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
+        @if (Model.Filter.IsActive)
+        {
+            <a asp-action="Index" asp-route-year="@Model.Month.Year" asp-route-month="@Model.Month.Month" class="btn btn-sm btn-outline-secondary">Temizle</a>
+        }
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="calendar-grid">
+        <thead>
+            <tr>
+                @foreach (var name in dayNames)
+                {
+                    <th scope="col">@name</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (var week = 0; week < Model.Weeks; week++)
+            {
+                <tr>
+                    @for (var weekday = 0; weekday < 7; weekday++)
+                    {
+                        var day = Model.GridStart.AddDays(week * 7 + weekday);
+                        var isOutside = day.Month != Model.Month.Month;
+                        var sessions = Model.SessionsOn(day).ToList();
+                        <td class="@(isOutside ? "is-outside" : "") @(day == today ? "is-today" : "")">
+                            <span class="calendar-day__number">@day.Day</span>
+                            @if (Model.ConflictDays.Contains(day.Date))
+                            {
+                                <span class="calendar-conflict" title="Aynı gün birden fazla şehirde etkinlik var">⚠ farklı şehirler</span>
+                            }
+                            @foreach (var session in sessions)
+                            {
+                                <a class="calendar-event" style="--c: @Model.ColorFor(session.ProductionId)"
+                                   asp-controller="Events" asp-action="Details" asp-route-id="@session.Id"
+                                   title="@session.Production?.Title">
+                                    <span class="calendar-event__time">@session.EventDate.ToString("HH:mm")</span>@session.Production?.Title
+                                    <span class="calendar-event__city">@session.City@(string.IsNullOrWhiteSpace(session.Venue) ? "" : " · " + session.Venue)</span>
+                                </a>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.Productions.Any())
+{
+    <div class="d-flex flex-wrap gap-3 mt-3 small text-muted">
+        @foreach (var production in Model.Productions.Where(p => Model.Sessions.Any(s => s.ProductionId == p.Id)))
+        {
+            <span><span class="event-dot" style="--c: @Model.ColorFor(production.Id)"></span>@production.Title</span>
+        }
+    </div>
+}
