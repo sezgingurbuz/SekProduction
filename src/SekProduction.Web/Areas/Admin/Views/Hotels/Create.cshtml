@@ -1,0 +1,23 @@
+@model Hotel
+@{
+    ViewData["Title"] = "Yeni Otel";
+}
+
+<div class="admin-page-header">
+    <div>
+        <a asp-action="Index" class="text-decoration-none small">&larr; Oteller</a>
+        <h1>Yeni Otel</h1>
+    </div>
+</div>
+
+<form asp-action="Create" method="post" class="col-lg-10">
+    <partial name="_HotelForm" model="Model" />
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

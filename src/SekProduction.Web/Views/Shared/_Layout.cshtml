@@ -23,6 +23,7 @@
                         <ul class="navbar-nav flex-grow-1">
                             <li class="nav-item"><a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Panelim</a></li>
                             <li class="nav-item"><a class="nav-link text-light" asp-area="" asp-controller="Calendar" asp-action="Index">Takvim</a></li>
+                            <li class="nav-item"><a class="nav-link text-light" asp-area="" asp-controller="Hotels" asp-action="Index">Oteller</a></li>
                             @if (User.IsInRole(SekProduction.Web.Data.SeedData.AdminRole))
                             {
                                 <li class="nav-item"><a class="nav-link text-warning" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Yönetim Paneli</a></li>

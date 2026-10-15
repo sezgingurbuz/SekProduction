@@ -1,0 +1,93 @@
+@model Hotel
+@{
+    var citySuggestions = (List<string>)(ViewData["CitySuggestions"] ?? new List<string>());
+}
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <label asp-for="City" class="form-label"></label>
+        <input asp-for="City" class="form-control" list="city-suggestions" autocomplete="off" />
+        <datalist id="city-suggestions">
+            @foreach (var city in citySuggestions)
+            {
+                <option value="@city"></option>
+            }
+        </datalist>
+        <span asp-validation-for="City" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Stars" class="form-label"></label>
+        <select asp-for="Stars" class="form-select">
+            <option value="">—</option>
+            @for (var star = 1; star <= 5; star++)
+            {
+                <option value="@star">@star</option>
+            }
+        </select>
+        <span asp-validation-for="Stars" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="SingleRoomPrice" class="form-label"></label>
+        <input asp-for="SingleRoomPrice" class="form-control" type="text" inputmode="decimal" autocomplete="off" />
+        <span asp-validation-for="SingleRoomPrice" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="DoubleRoomPrice" class="form-label"></label>
+        <input asp-for="DoubleRoomPrice" class="form-control" type="text" inputmode="decimal" autocomplete="off" />
+        <span asp-validation-for="DoubleRoomPrice" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Address" class="form-label"></label>
+        <input asp-for="Address" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="ContactName" class="form-label"></label>
+        <input asp-for="ContactName" class="form-control" autocomplete="off" />
+        <span asp-validation-for="ContactName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="WebsiteUrl" class="form-label"></label>
+        <input asp-for="WebsiteUrl" class="form-control" placeholder="https://" autocomplete="off" />
+        <span asp-validation-for="WebsiteUrl" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Pazarlık notu, iptal koşulu, otopark vb."></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-check">
+            <input class="form-check-input" asp-for="BreakfastIncluded" />
+            <label class="form-check-label" asp-for="BreakfastIncluded"></label>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-check">
+            <input class="form-check-input" asp-for="IsPreferred" />
+            <label class="form-check-label" asp-for="IsPreferred"></label>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-check">
+            <input class="form-check-input" asp-for="IsActive" />
+            <label class="form-check-label" asp-for="IsActive"></label>
+        </div>
+    </div>
+</div>

@@ -92,6 +92,46 @@
             </div>
         }
 
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h2 class="h6 text-uppercase text-muted">@Model.Event.City otelleri</h2>
+                    <a asp-controller="Hotels" asp-action="Index" asp-route-city="@Model.Event.City" class="small">Tümü</a>
+                </div>
+                @if (!Model.Hotels.Any())
+                {
+                    <div class="text-muted small">Bu şehir için kayıtlı otel yok.</div>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var hotel in Model.Hotels)
+                        {
+                            <li class="border-bottom py-2">
+                                <div class="fw-semibold">
+                                    @hotel.Name
+                                    @if (hotel.IsPreferred)
+                                    {
+                                        <span class="badge bg-success">Anlaşmalı</span>
+                                    }
+                                </div>
+                                <div class="small">
+                                    Tek: @(hotel.SingleRoomPrice is null ? "—" : hotel.SingleRoomPrice.Value.ToString("C2"))
+                                    &middot;
+                                    Çift: @(hotel.DoubleRoomPrice is null ? "—" : hotel.DoubleRoomPrice.Value.ToString("C2"))
+                                    <span class="text-muted">· kahvaltı @(hotel.BreakfastIncluded ? "dahil" : "hariç")</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(hotel.Phone))
+                                {
+                                    <div class="small text-muted">@hotel.Phone</div>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
         @if (Model.SameDayEvents.Any())
         {
             <div class="card mb-4">

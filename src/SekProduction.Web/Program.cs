@@ -23,8 +23,12 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 });
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.ModelBinderProviders.Insert(0, new SekProduction.Web.Services.DecimalModelBinderProvider());
+});
 builder.Services.AddSingleton<SekProduction.Web.Services.ImageStorage>();
+builder.Services.AddScoped<SekProduction.Web.Services.CityDirectory>();
 builder.Services.AddScoped<SekProduction.Web.Services.TourCalendarService>();
 
 var app = builder.Build();

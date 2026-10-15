@@ -14,13 +14,15 @@ public class TourCalendarService
         "#db2777", "#0891b2", "#65a30d", "#9333ea", "#ea580c"
     };
 
-    private static readonly StringComparer TurkishComparer = StringComparer.Create(new CultureInfo("tr-TR"), true);
+    private static readonly StringComparer TurkishComparer = CityDirectory.TurkishComparer;
 
     private readonly ApplicationDbContext _context;
+    private readonly CityDirectory _cities;
 
-    public TourCalendarService(ApplicationDbContext context)
+    public TourCalendarService(ApplicationDbContext context, CityDirectory cities)
     {
         _context = context;
+        _cities = cities;
     }
 
     // readyOnly: şehri girilmemiş taslak seanslar ekibe gösterilmez.
@@ -59,11 +61,7 @@ public class TourCalendarService
             .OrderBy(e => e.EventDate)
             .ToListAsync();
 
-        var cities = await _context.EventSchedules
-            .Where(e => e.City != null && e.City != "")
-            .Select(e => e.City!)
-            .Distinct()
-            .ToListAsync();
+        var cities = await _cities.EventCitiesAsync();
         var venues = await _context.EventSchedules
             .Where(e => e.Venue != null && e.Venue != "")
             .Select(e => e.Venue!)
@@ -81,8 +79,8 @@ public class TourCalendarService
             UpcomingSessions = upcoming,
             Productions = productions,
             ProductionColors = ColorMap(productions.OrderBy(p => p.Id).Select(p => p.Id)),
-            Cities = cities.OrderBy(c => c, TurkishComparer).ToList(),
-            CitySuggestions = cities.Concat(TurkeyProvinces.Names).Distinct(TurkishComparer).OrderBy(c => c, TurkishComparer).ToList(),
+            Cities = cities,
+            CitySuggestions = await _cities.SuggestionsAsync(),
             Venues = venues.OrderBy(v => v, TurkishComparer).ToList()
         };
     }

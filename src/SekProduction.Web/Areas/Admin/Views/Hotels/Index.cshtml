@@ -1,0 +1,122 @@
+@model List<Hotel>
+@{
+    ViewData["Title"] = "Oteller";
+    var cities = (List<string>)(ViewData["Cities"] ?? new List<string>());
+    var selectedCity = ViewData["SelectedCity"] as string;
+    var missing = (List<string>)(ViewData["EventCitiesWithoutHotel"] ?? new List<string>());
+}
+
+<div class="admin-page-header">
+    <div>
+        <h1>Oteller</h1>
+        <div class="text-muted small">
+            Turne şehirlerindeki oteller ve gecelik fiyatlar. Çalışanlar etkinlik sayfasında şehrin otellerini görür.
+        </div>
+    </div>
+    <a asp-action="Create" asp-route-city="@selectedCity" class="btn btn-primary">+ Yeni Otel</a>
+</div>
+
+@if (missing.Any())
+{
+    <div class="alert alert-warning">
+        Etkinlik planlanmış ama oteli girilmemiş şehirler:
+        @foreach (var city in missing)
+        {
+            <a asp-action="Create" asp-route-city="@city" class="badge rounded-pill bg-warning text-dark text-decoration-none">@city +</a>
+        }
+    </div>
+}
+
+<form asp-action="Index" method="get" class="d-flex flex-wrap gap-2 align-items-end mb-3">
+    <div>
+        <label class="form-label small mb-1" for="city">Şehir</label>
+        <select id="city" name="city" class="form-select form-select-sm">
+            <option value="">Tümü</option>
+            @foreach (var city in cities)
+            {
+                <option value="@city" selected="@(selectedCity == city)">@city</option>
+            }
+        </select>
+    </div>
+    <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
+    @if (!string.IsNullOrEmpty(selectedCity))
+    {
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Temizle</a>
+    }
+</form>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Bu filtreye uygun otel kaydı yok.</p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Şehir</th>
+                <th>Otel</th>
+                <th>Tek Kişilik</th>
+                <th>Çift Kişilik</th>
+                <th>Kahvaltı</th>
+                <th>İletişim</th>
+                <th>Durum</th>
+                <th class="text-end"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var hotel in Model)
+            {
+                <tr class="@(hotel.IsActive ? "" : "table-secondary")">
+                    <td>@hotel.City</td>
+                    <td>
+                        <span class="fw-semibold">@hotel.Name</span>
+                        @if (hotel.IsPreferred)
+                        {
+                            <span class="badge bg-success ms-1">Anlaşmalı</span>
+                        }
+                        @if (hotel.Stars is not null)
+                        {
+                            <span class="text-warning ms-1">@hotel.StarsText</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(hotel.Address))
+                        {
+                            <div class="text-muted small">@hotel.Address</div>
+                        }
+                    </td>
+                    <td>@(hotel.SingleRoomPrice is null ? "—" : hotel.SingleRoomPrice.Value.ToString("C2"))</td>
+                    <td>@(hotel.DoubleRoomPrice is null ? "—" : hotel.DoubleRoomPrice.Value.ToString("C2"))</td>
+                    <td>@(hotel.BreakfastIncluded ? "Dahil" : "Hariç")</td>
+                    <td class="small text-muted">
+                        @hotel.Phone
+                        @if (!string.IsNullOrWhiteSpace(hotel.ContactName))
+                        {
+                            <div>@hotel.ContactName</div>
+                        }
+                    </td>
+                    <td>
+                        @if (hotel.IsActive)
+                        {
+                            <span class="text-success">Listede</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Gizli</span>
+                        }
+                        @if (hotel.PriceUpdatedAt is not null)
+                        {
+                            <div class="text-muted small">Fiyat: @hotel.PriceUpdatedAt.Value.ToLocalTime().ToString("d MMM yyyy")</div>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@hotel.Id" class="btn btn-sm btn-outline-dark">Düzenle</a>
+                        <form asp-action="Delete" asp-route-id="@hotel.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('Bu otel kaydı silinsin mi?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

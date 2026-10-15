@@ -44,7 +44,18 @@ public class EventsController : Controller
         {
             Event = current,
             SameDayEvents = sameDay,
+            Hotels = await HotelsInCityAsync(current.City!),
             ProductionColors = await _calendar.ProductionColorsAsync()
         });
+    }
+
+    private async Task<List<Hotel>> HotelsInCityAsync(string city)
+    {
+        var hotels = await _context.Hotels.Where(h => h.IsActive).ToListAsync();
+        return hotels
+            .Where(h => CityDirectory.TurkishComparer.Equals(h.City, city))
+            .OrderByDescending(h => h.IsPreferred)
+            .ThenBy(h => h.Name, CityDirectory.TurkishComparer)
+            .ToList();
     }
 }

@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
     public DbSet<CastMember> CastMembers => Set<CastMember>();
     public DbSet<ProductionPhoto> ProductionPhotos => Set<ProductionPhoto>();
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
+    public DbSet<Hotel> Hotels => Set<Hotel>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -36,6 +37,9 @@ public class ApplicationDbContext : IdentityDbContext<AppUser>
             .WithMany(p => p.CastMembers)
             .HasForeignKey(c => c.ProductionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Hotel>()
+            .HasIndex(h => new { h.City, h.Name });
 
         builder.Entity<ProductionPhoto>()
             .HasOne(ph => ph.Production)
